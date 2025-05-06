@@ -99,7 +99,6 @@ public class ChessPiece {
         }else if(this.type == PieceType.ROOK) { //move Rook
             int[] possibleRow = {-1,0,1,0};
             int[] possibleCol = {0,-1,0,1};
-//            int[][] possibleMove = {{-1, 0}, {0, -1}, {1, 0}, {0, 1}};
 
             for (int i = 0; i < 4; i++) {
                 int newRow = myPosition.getRow() + possibleRow[i];
