@@ -139,6 +139,22 @@ public class ChessPiece {
                     col += mv[1];
                 }
             }
+        }else if(this.type == PieceType.KING) { //move King
+            int[][] possibleMove = {{-1,-1}, {-1, 1}, {1, -1}, {1,1}, {-1, 0}, {0, -1}, {1, 0}, {0, 1}};
+
+            for (int[] mv : possibleMove) {
+                int row = myPosition.getRow() + mv[0];
+                int col = myPosition.getColumn() + mv[1];
+
+                if (row >= 1 && row <= 8 && col >= 1 && col <= 8) {
+                    ChessPosition newPosition = new ChessPosition(row, col);
+                    ChessPiece other = board.getPiece(newPosition);
+
+                    if (other == null || other.getTeamColor() != this.pieceColor) {
+                        moves.add(new ChessMove(myPosition, newPosition, null));
+                    }
+                }
+            }
         }
 
         //Pawn
