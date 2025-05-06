@@ -53,7 +53,45 @@ public class ChessPiece {
      * @return Collection of valid moves
      */
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
-        return new ArrayList<>();
+        Collection<ChessMove> moves = new ArrayList<>();
+
+        //move Bishop
+        if(this.type == PieceType.BISHOP) {
+            int[][] possibleMove = {{1,1}, {1, -1}, {-1, -1}, {-1, 1}};
+
+            for (int[] mv : possibleMove) {
+                int row = myPosition.getRow() + mv[0];
+                int col = myPosition.getColumn() + mv[1];
+
+                while (row >= 1 && row <= 8 && col >= 1 && col <= 8) {
+                    ChessPosition newPosition = new ChessPosition(row, col);
+                    ChessPiece other = board.getPiece(newPosition);
+
+                    if (other == null) {
+                        moves.add(new ChessMove(myPosition, newPosition, null));
+                    } else {
+                        if (other.getTeamColor() != this.pieceColor) {
+                            moves.add(new ChessMove(myPosition, newPosition, null));
+                        }
+                        break;
+                    }
+                    row += mv[0];
+                    col += mv[1];
+                }
+            }
+        }
+
+        //Knight
+
+        //Rook
+
+        //Pawn
+
+        //Queen
+
+        //King
+
+        return moves;
     }
 
     @Override
