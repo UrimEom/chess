@@ -55,9 +55,46 @@ public class ChessPiece {
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
         Collection<ChessMove> moves = new ArrayList<>();
 
-        //move Bishop
-        if(this.type == PieceType.BISHOP) {
-            int[][] possibleMove = {{1,1}, {1, -1}, {-1, -1}, {-1, 1}};
+        if(this.type == PieceType.BISHOP) { //move Bishop
+            int[][] possibleMove = {{-1,-1}, {-1, 1}, {1, -1}, {1,1}};
+
+            for (int[] mv : possibleMove) {
+                int row = myPosition.getRow() + mv[0];
+                int col = myPosition.getColumn() + mv[1];
+
+                while (row >= 1 && row <= 8 && col >= 1 && col <= 8) {
+                    ChessPosition newPosition = new ChessPosition(row, col);
+                    ChessPiece other = board.getPiece(newPosition);
+
+                    if (other == null) {
+                        moves.add(new ChessMove(myPosition, newPosition, null));
+                    }else {
+                        if (other.getTeamColor() != this.pieceColor) {
+                            moves.add(new ChessMove(myPosition, newPosition, null));
+                        }
+                        break;
+                    }
+                    row += mv[0];
+                    col += mv[1];
+                }
+            }
+        }else if(this.type == PieceType.KNIGHT) { //move Knight
+            int[][] possibleMove = {{2,1}, {1,2}, {-1,2}, {-2,1}, {-2,-1}, {-1,-2}, {1,-2}, {2,-1}};
+            for (int[] mv : possibleMove) {
+                int row = myPosition.getRow() + mv[0];
+                int col = myPosition.getColumn() + mv[1];
+
+                if (row >= 1 && row <= 8 && col >= 1 && col <= 8) {
+                    ChessPosition newPosition = new ChessPosition(row, col);
+                    ChessPiece other = board.getPiece(newPosition);
+
+                    if (other == null || other.getTeamColor() != this.pieceColor) {
+                        moves.add(new ChessMove(myPosition, newPosition, null));
+                    }
+                }
+            }
+        }else if(this.type == PieceType.ROOK) { //move Rook
+            int[][] possibleMove = {{-1, 0}, {0, -1}, {1, 0}, {0, 1}};
 
             for (int[] mv : possibleMove) {
                 int row = myPosition.getRow() + mv[0];
@@ -80,10 +117,6 @@ public class ChessPiece {
                 }
             }
         }
-
-        //Knight
-
-        //Rook
 
         //Pawn
 
