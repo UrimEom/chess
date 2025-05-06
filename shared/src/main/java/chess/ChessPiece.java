@@ -55,7 +55,7 @@ public class ChessPiece {
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
         Collection<ChessMove> moves = new ArrayList<>();
 
-        if(this.type == PieceType.BISHOP) { //move Bishop
+        if(this.type == PieceType.BISHOP) { //Bishop's move
             int[] possibleRow = {-1, -1, 1, 1};
             int[] possibleCol = {-1, 1, -1 , 1};
 
@@ -67,19 +67,19 @@ public class ChessPiece {
                     ChessPosition newPosition = new ChessPosition(newRow, newCol);
                     ChessPiece other = board.getPiece(newPosition);
 
-                    if (other == null) {
+                    if (other == null) { //move Bishop
                         moves.add(new ChessMove(myPosition, newPosition, null));
                     }else {
-                        if (other.getTeamColor() != this.pieceColor) {
+                        if (other.getTeamColor() != this.pieceColor) { //capture the enemy
                             moves.add(new ChessMove(myPosition, newPosition, null));
                         }
-                        break;
+                        break; //stop if something in that position is already there
                     }
                     newRow += possibleRow[i];
                     newCol += possibleCol[i];
                 }
             }
-        }else if(this.type == PieceType.KNIGHT) { //move Knight
+        }else if(this.type == PieceType.KNIGHT) { //Knight's move
             int[] possibleRow = {2,1,-1,-2,-2,-1,1,2};
             int[] possibleCol = {1,2,2,1,-1,-2,-2,-1};
 
@@ -91,12 +91,12 @@ public class ChessPiece {
                     ChessPosition newPosition = new ChessPosition(newRow, newCol);
                     ChessPiece other = board.getPiece(newPosition);
 
-                    if (other == null || other.getTeamColor() != this.pieceColor) {
+                    if (other == null || other.getTeamColor() != this.pieceColor) { //move or capture the enemy
                         moves.add(new ChessMove(myPosition, newPosition, null));
                     }
                 }
             }
-        }else if(this.type == PieceType.ROOK) { //move Rook
+        }else if(this.type == PieceType.ROOK) { //Rook's move
             int[] possibleRow = {-1,0,1,0};
             int[] possibleCol = {0,-1,0,1};
 
@@ -108,19 +108,19 @@ public class ChessPiece {
                     ChessPosition newPosition = new ChessPosition(newRow, newCol);
                     ChessPiece other = board.getPiece(newPosition);
 
-                    if (other == null) {
+                    if (other == null) { //move Rook
                         moves.add(new ChessMove(myPosition, newPosition, null));
                     } else {
-                        if (other.getTeamColor() != this.pieceColor) {
+                        if (other.getTeamColor() != this.pieceColor) { //capture enemy
                             moves.add(new ChessMove(myPosition, newPosition, null));
                         }
-                        break;
+                        break; //stop if something in that position is already there
                     }
                     newRow += possibleRow[i];
                     newCol += possibleCol[i];
                 }
             }
-        }else if(this.type == PieceType.QUEEN) { //move Queen
+        }else if(this.type == PieceType.QUEEN) { //Queen's move
             int[] possibleRow = {-1,-1,1,1,-1,0,1,0};
             int[] possibleCol = {-1,1,-1,1,0,-1,0,1};
 
@@ -132,19 +132,19 @@ public class ChessPiece {
                     ChessPosition newPosition = new ChessPosition(newRow, newCol);
                     ChessPiece other = board.getPiece(newPosition);
 
-                    if (other == null) {
+                    if (other == null) { //move Queen
                         moves.add(new ChessMove(myPosition, newPosition, null));
                     } else {
-                        if (other.getTeamColor() != this.pieceColor) {
+                        if (other.getTeamColor() != this.pieceColor) { //capture the enemy
                             moves.add(new ChessMove(myPosition, newPosition, null));
                         }
-                        break;
+                        break; //stop if something in that position is already there
                     }
                     newRow += possibleRow[i];
                     newCol += possibleCol[i];
                 }
             }
-        }else if(this.type == PieceType.KING) { //move King
+        }else if(this.type == PieceType.KING) { //King's move
             int[] possibleRow = {-1,-1,1,1,-1,0,1,0};
             int[] possibleCol = {-1,1,-1,1,0,-1,0,1};
 
@@ -156,27 +156,28 @@ public class ChessPiece {
                     ChessPosition newPosition = new ChessPosition(newRow, newCol);
                     ChessPiece other = board.getPiece(newPosition);
 
-                    if (other == null || other.getTeamColor() != this.pieceColor) {
+                    if (other == null || other.getTeamColor() != this.pieceColor) { //move or capture the enemy
                         moves.add(new ChessMove(myPosition, newPosition, null));
                     }
                 }
             }
-        }else if(this.type == PieceType.PAWN) { //move pawn
+        }else if(this.type == PieceType.PAWN) { //Pawn's move
             int row = myPosition.getRow();
             int col = myPosition.getColumn();
 
+            //white case
             if(this.pieceColor == ChessGame.TeamColor.WHITE) {
                 int nextMove = row + 1;
 
                 //normal move
                 ChessPosition nextForward = new ChessPosition(nextMove, col);
                 if(nextMove <= 8 && board.getPiece(nextForward) == null) {
-                    if(nextMove == 8) {
+                    if(nextMove == 8) { //promote
                         ChessPiece.PieceType[] promotion = {PieceType.BISHOP, PieceType.KNIGHT, PieceType.ROOK, PieceType.QUEEN};
                         for (int i = 0; i < 4; i++) {
                             moves.add(new ChessMove(myPosition, nextForward, promotion[i]));
                         }
-                    }else {
+                    }else { //move the pawn
                         moves.add(new ChessMove(myPosition, nextForward, null));
 
                         //start move
@@ -189,37 +190,39 @@ public class ChessPiece {
                     }
                 }
 
-                //capture
+                //capture the enemy
                 int[] possibleCol = {-1, 1};
                 for(int possible : possibleCol) {
                     int captureCol = col + possible;
-                    if(captureCol >= 1 && captureCol <= 8 && nextMove <= 8) {
+                    if (captureCol >= 1 && captureCol <= 8 && nextMove <= 8) {
                         ChessPosition capturePiece = new ChessPosition(nextMove, captureCol);
                         ChessPiece piece = board.getPiece(capturePiece);
-                        if(piece != null && piece.getTeamColor() != this.pieceColor) {
-                            if(nextMove == 8) {
+
+                        if (piece != null && piece.getTeamColor() != this.pieceColor) {
+                            if (nextMove == 8) { //promote and capture
                                 ChessPiece.PieceType[] promotion = {PieceType.BISHOP, PieceType.KNIGHT, PieceType.ROOK, PieceType.QUEEN};
                                 for (int i = 0; i < 4; i++) {
-                                    moves.add(new ChessMove(myPosition,capturePiece, promotion[i]));
+                                    moves.add(new ChessMove(myPosition, capturePiece, promotion[i]));
                                 }
-                            }else {
+                            } else { //capture
                                 moves.add(new ChessMove(myPosition, capturePiece, null));
                             }
                         }
                     }
                 }
+            //black case
             }else if(this.pieceColor == ChessGame.TeamColor.BLACK) {
                 int nextMove = row - 1;
 
                 //normal move
                 ChessPosition nextForward = new ChessPosition(nextMove, col);
                 if(nextMove >= 1 && board.getPiece(nextForward) == null) {
-                    if(nextMove == 1) {
+                    if(nextMove == 1) { //promote and move
                         ChessPiece.PieceType[] promotion = {PieceType.BISHOP, PieceType.KNIGHT, PieceType.ROOK, PieceType.QUEEN};
                         for (int i = 0; i < 4; i++) {
                             moves.add(new ChessMove(myPosition, nextForward, promotion[i]));
                         }
-                    }else {
+                    }else { //move
                         moves.add(new ChessMove(myPosition, nextForward, null));
 
                         //start move
@@ -232,17 +235,18 @@ public class ChessPiece {
                     }
                 }
 
-                //capture
+                //capture the enemy
                 int[] possibleCol = {-1, 1};
                 for(int possible : possibleCol) {
                     int captureCol = col + possible;
                     if(captureCol >= 1 && captureCol <= 8 && nextMove <= 8) {
                         ChessPosition capturePiece = new ChessPosition(nextMove, captureCol);
                         ChessPiece piece = board.getPiece(capturePiece);
+
                         if (piece != null && piece.getTeamColor() != this.pieceColor) {
-                            if (nextMove == 1) {
+                            if (nextMove == 1) { //promote and capture
                                 ChessPiece.PieceType[] promotion = {PieceType.BISHOP, PieceType.KNIGHT, PieceType.ROOK, PieceType.QUEEN};
-                                for (int i = 0; i < 4; i++) {
+                                for (int i = 0; i < 4; i++) { //capture
                                     moves.add(new ChessMove(myPosition, capturePiece, promotion[i]));
                                 }
                             }else {
