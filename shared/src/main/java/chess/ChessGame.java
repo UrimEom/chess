@@ -69,8 +69,9 @@ public class ChessGame {
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
        ChessPiece piece = board.getPiece(startPosition);
 
+       //if there is no piece in start position
        if(piece == null) {
-           return null;
+           return new ArrayList<>();
        }
 
        Collection<ChessMove> validMoves = new ArrayList<>();
@@ -91,10 +92,12 @@ public class ChessGame {
            //if there is "check"
            ChessBoard original = this.board;
            this.setBoard(temp);
-           if(!isInCheck(piece.getTeamColor())) {
+           boolean check = isInCheck(piece.getTeamColor());
+           this.setBoard(original);
+           if(!check) {
                validMoves.add(move);
            }
-           setBoard(original);
+
        }
        return validMoves;
     }
@@ -145,8 +148,8 @@ public class ChessGame {
         ChessBoard board = getBoard();
         ChessPosition kingPos = null;
         //find the King position
-        for(int row = 0; row < 8; row++) {
-            for(int col = 0; col < 8; col++) {
+        for(int row = 1; row <= 8; row++) {
+            for(int col = 1; col <= 8; col++) {
                 ChessPosition position = new ChessPosition(row,col);
                 if(board.getPiece(position) != null && board.getPiece(position).getPieceType() == ChessPiece.PieceType.KING && board.getPiece(position).getTeamColor() == teamColor) {
                     kingPos = position;
@@ -159,8 +162,8 @@ public class ChessGame {
             return false;
         }
         //find enemy pieces
-        for(int row = 0; row < 8; row++) {
-            for(int col = 0; col < 8; col++) {
+        for(int row = 1; row <= 8; row++) {
+            for(int col = 1; col <= 8; col++) {
                 ChessPosition position = new ChessPosition(row, col);
                 if(board.getPiece(position) != null && board.getPiece(position).getTeamColor() != board.getPiece(kingPos).getTeamColor()) {
                     Collection<ChessMove> moves = board.getPiece(position).pieceMoves(board, position);
