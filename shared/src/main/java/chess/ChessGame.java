@@ -2,7 +2,7 @@ package chess;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.Objects;
 
 /**
  * For a class that can manage a chess game, making moves on a board
@@ -15,7 +15,7 @@ public class ChessGame {
     private ChessBoard board = new ChessBoard();
 
     public ChessGame() {
-
+        board.resetBoard();
     }
 
     /**
@@ -42,6 +42,23 @@ public class ChessGame {
         BLACK
     }
 
+    public ChessBoard copyBoard(ChessBoard copy) {
+        ChessBoard newBoard = new ChessBoard();
+
+        for(int i = 1; i <= 8; i++) {
+            for(int j = 1; j <= 8; j++) {
+                ChessPosition position = new ChessPosition(i, j);
+                ChessPiece piece = board.getPiece(position);
+                if(piece != null) {
+                    ChessPiece copiedPiece = new ChessPiece(piece.getTeamColor(), piece.getPieceType());
+                    newBoard.addPiece(position, copiedPiece);
+                }else {
+                    newBoard.addPiece(position, null);
+                }
+            }
+        }
+        return newBoard;
+    }
     /**
      * Gets a valid moves for a piece at the given location
      *
@@ -50,10 +67,9 @@ public class ChessGame {
      * startPosition
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
-       ChessBoard board = getBoard();
        ChessPiece piece = board.getPiece(startPosition);
 
-       if(piece == null || piece.getTeamColor() != this.team) {
+       if(piece == null) {
            return null;
        }
 
@@ -61,17 +77,24 @@ public class ChessGame {
        Collection<ChessMove> moves = piece.pieceMoves(board, startPosition);
        for (ChessMove move : moves) {
            //create a deep copy of the board
-           ChessBoard temp = board.clone();
+           ChessBoard temp = copyBoard(board);
+
            //Check the move on the temporary board
-           if (move.getPromotionPiece() != null) { //move with promotion
+           if (move.getPromotionPiece() != null) { //capture and move with promotion
                temp.addPiece(move.getEndPosition(), new ChessPiece(piece.getTeamColor(), move.getPromotionPiece()));
-           } else { //move without promotion
+           } else { //capture and move without promotion
                temp.addPiece(move.getEndPosition(), piece);
            }
            //move if there is nothing in the position
            temp.addPiece(startPosition, null);
 
-
+           //if there is "check"
+           ChessBoard original = this.board;
+           this.setBoard(temp);
+           if(!isInCheck(piece.getTeamColor())) {
+               validMoves.add(move);
+           }
+           setBoard(original);
        }
        return validMoves;
     }
@@ -83,7 +106,33 @@ public class ChessGame {
      * @throws InvalidMoveException if move is invalid
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
+        ChessPiece piece = board.getPiece(move.getStartPosition());
 
+        //check if piece is in current team
+        if(piece == null || piece.getTeamColor() != team) {
+            throw new InvalidMoveException("It's not your turn");
+        }
+
+        Collection<ChessMove> validMoves = validMoves(move.getStartPosition());
+        //check if making move is valid
+        if(!validMoves.contains(move)) {
+            throw new InvalidMoveException("Not valid move");
+        }
+
+        //move with promotion
+        if(move.getPromotionPiece() != null) {
+            board.addPiece(move.getEndPosition(), new ChessPiece(piece.getTeamColor(), move.getPromotionPiece()));
+        }else { //move without promotion
+            board.addPiece(move.getEndPosition(), piece);
+        }
+        board.addPiece(move.getStartPosition(), null);
+
+        //Switch the team turn
+        if(team == TeamColor.WHITE) {
+            team = TeamColor.BLACK;
+        }else {
+            team = TeamColor.WHITE;
+        }
     }
 
     /**
