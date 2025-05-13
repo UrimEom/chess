@@ -22,6 +22,9 @@ public class ChessGame {
     private boolean isBlackRookLeftMoved = false;
     private boolean isBlackRookRightMoved = false;
 
+    private boolean validEnPassant = false;
+    private boolean[] DoubleMoveWhite = new boolean[8];
+    private boolean[] DoubleMoveBlack = new boolean[8];
 
     public ChessGame() {
         board.resetBoard();
@@ -113,6 +116,10 @@ public class ChessGame {
         if(piece.getPieceType() == ChessPiece.PieceType.KING) {
             validMoves.addAll(castlingMove(startPosition));
         }
+        //En Passant move
+        if(piece.getPieceType() == ChessPiece.PieceType.PAWN && validEnPassant) {
+            validMoves.addAll(enPassantMove(startPosition));
+        }
 
        return validMoves;
     }
@@ -135,6 +142,14 @@ public class ChessGame {
         //check if making move is valid
         if(!validMoves.contains(move)) {
             throw new InvalidMoveException("Not valid move");
+        }
+
+        //En Passant capture
+        if(piece.getPieceType() == ChessPiece.PieceType.PAWN && board.getPiece(move.getEndPosition()) == null && move.getStartPosition().getColumn() != move.getEndPosition().getColumn()) {
+            int captureRow = (piece.getTeamColor() == TeamColor.WHITE) ? move.getEndPosition().getRow() - 1 : move.getEndPosition().getRow() + 1;
+
+            ChessPosition capturePosition = new ChessPosition(captureRow, move.getEndPosition().getColumn());
+            board.addPiece(capturePosition, null); //remove the captured pawn
         }
 
         //move with promotion
@@ -181,6 +196,28 @@ public class ChessGame {
                 if(move.getStartPosition().getRow() == 8 && move.getStartPosition().getColumn() == 8) {
                     isBlackRookRightMoved = true;
                 }
+            }
+        }
+
+        //Reset all en passant relating variables
+        for(int i = 0; i < 8; i++) {
+            DoubleMoveWhite[i] = false;
+            DoubleMoveBlack[i] = false;
+        }
+        validEnPassant = false;
+
+        //En Passant move by pawn double moves
+        if(piece.getPieceType() == ChessPiece.PieceType.PAWN) {
+            int col = move.getStartPosition().getColumn() -1;
+            boolean isDoubleMove = (piece.getTeamColor() == TeamColor.WHITE && move.getStartPosition().getRow() == 2 && move.getEndPosition().getRow() == 4) || (piece.getTeamColor() == TeamColor.BLACK && move.getStartPosition().getRow() == 7 && move.getEndPosition().getRow() == 5);
+
+            if(isDoubleMove) {
+                if (piece.getTeamColor() == TeamColor.WHITE) {
+                    DoubleMoveWhite[col] = true;
+                } else {
+                    DoubleMoveBlack[col] = true;
+                }
+                validEnPassant = true;
             }
         }
 
@@ -274,6 +311,111 @@ public class ChessGame {
             }
         }
         return castlingMoves;
+    }
+
+    private Collection<ChessMove> enPassantMove(ChessPosition startPosition) {
+        List<ChessMove> enPassantMoves = new ArrayList<>();
+        ChessPiece pawnPiece = board.getPiece(startPosition);
+
+        //if
+        if(pawnPiece == null || pawnPiece.getPieceType() != ChessPiece.PieceType.PAWN) return enPassantMoves;
+
+        int row = startPosition.getRow();
+        int col = startPosition.getColumn();
+        TeamColor color = pawnPiece.getTeamColor();
+
+        //white pawn case
+        if(color == TeamColor.WHITE && row == 5) {
+            //check left
+            if(col > 1 && DoubleMoveBlack[col - 2]) {
+                ChessPosition leftPosition = new ChessPosition(row, col-1);
+                ChessPiece leftPiece = board.getPiece(leftPosition);
+                if(leftPiece != null && leftPiece.getPieceType() == ChessPiece.PieceType.PAWN && leftPiece.getTeamColor() == TeamColor.BLACK) {
+                    ChessPosition movePosition = new ChessPosition(row+1, col-1);
+                    ChessMove move = new ChessMove(startPosition, movePosition, null);
+
+                    ChessBoard temp = copyBoard(board);
+                    temp.addPiece(movePosition, pawnPiece);
+                    temp.addPiece(startPosition, null);
+                    temp.addPiece(leftPosition, null); //capture the black pawn
+
+                    ChessBoard original = board;
+                    setBoard(temp);
+                    if(!isInCheck(color)) {
+                        enPassantMoves.add(move);
+                    }
+                    setBoard(original);
+                }
+            }
+            //check right
+            if(col < 8 && DoubleMoveBlack[col]) {
+                ChessPosition rightPosition = new ChessPosition(row, col+1);
+                ChessPiece rightPiece = board.getPiece(rightPosition);
+                if(rightPiece != null && rightPiece.getPieceType() == ChessPiece.PieceType.PAWN && rightPiece.getTeamColor() == TeamColor.BLACK) {
+                    ChessPosition movePosition = new ChessPosition(row+1, col+1);
+                    ChessMove move = new ChessMove(startPosition, movePosition, null);
+
+                    ChessBoard temp = copyBoard(board);
+                    temp.addPiece(movePosition, pawnPiece);
+                    temp.addPiece(startPosition, null);
+                    temp.addPiece(rightPosition, null); //capture the black pawn
+
+                    ChessBoard original = board;
+                    setBoard(temp);
+                    if(!isInCheck(color)) {
+                        enPassantMoves.add(move);
+                    }
+                    setBoard(original);
+                }
+            }
+        }
+
+        //black pawn case
+        if(color == TeamColor.BLACK && row == 4) {
+            //check left
+            if(col > 1 && DoubleMoveWhite[col - 2]) {
+                ChessPosition leftPosition = new ChessPosition(row, col-1);
+                ChessPiece leftPiece = board.getPiece(leftPosition);
+                if(leftPiece != null && leftPiece.getPieceType() == ChessPiece.PieceType.PAWN && leftPiece.getTeamColor() == TeamColor.WHITE) {
+                    ChessPosition movePosition = new ChessPosition(row-1, col-1);
+                    ChessMove move = new ChessMove(startPosition, movePosition, null);
+
+                    ChessBoard temp = copyBoard(board);
+                    temp.addPiece(movePosition, pawnPiece);
+                    temp.addPiece(startPosition, null);
+                    temp.addPiece(leftPosition, null); //capture the black pawn
+
+                    ChessBoard original = board;
+                    setBoard(temp);
+                    if(!isInCheck(color)) {
+                        enPassantMoves.add(move);
+                    }
+                    setBoard(original);
+                }
+            }
+            //check right
+            if(col < 8 && DoubleMoveWhite[col]) {
+                ChessPosition rightPosition = new ChessPosition(row, col+1);
+                ChessPiece rightPiece = board.getPiece(rightPosition);
+                if(rightPiece != null && rightPiece.getPieceType() == ChessPiece.PieceType.PAWN && rightPiece.getTeamColor() == TeamColor.WHITE) {
+                    ChessPosition movePosition = new ChessPosition(row-1, col+1);
+                    ChessMove move = new ChessMove(startPosition, movePosition, null);
+
+                    ChessBoard temp = copyBoard(board);
+                    temp.addPiece(movePosition, pawnPiece);
+                    temp.addPiece(startPosition, null);
+                    temp.addPiece(rightPosition, null); //capture the black pawn
+
+                    ChessBoard original = board;
+                    setBoard(temp);
+                    if(!isInCheck(color)) {
+                        enPassantMoves.add(move);
+                    }
+                    setBoard(original);
+                }
+            }
+        }
+        return enPassantMoves;
     }
     /**
      * Determines if the given team is in check
