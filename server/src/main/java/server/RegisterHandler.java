@@ -25,14 +25,14 @@ public class RegisterHandler {
         try {
             JsonObject json = JsonParser.parseString(req.body()).getAsJsonObject();
 
-            String username = json.get("username").getAsString();
-            String password = json.get("password").getAsString();
-            String email = json.get("email").getAsString();
-
-            if(username == null || password == null || email == null) {
+            if(!json.has("username") || !json.has("password") || !json.has("email") || json.get("username").getAsString().isBlank() || json.get("password").getAsString().isBlank() || json.get("email").getAsString().isBlank()) {
                 res.status(400);
                 return gson.toJson(Map.of("message", "Error: bad request"));
             }
+
+            String username = json.get("username").getAsString();
+            String password = json.get("password").getAsString();
+            String email = json.get("email").getAsString();
 
             AuthData auth = userService.register(username, password, email);
 
@@ -50,7 +50,7 @@ public class RegisterHandler {
             return gson.toJson(Map.of("message", e.getMessage()));
         } catch (Exception e) {
             res.status(500);
-            return gson.toJson(Map.of("message", "Error: sever error"));
+            return gson.toJson(Map.of("message", "Error: server error"));
         }
 
     }
