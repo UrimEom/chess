@@ -38,12 +38,12 @@ public class UserService {
 
     public AuthData login(String username, String password) throws DataAccessException {
         if(username == null || password == null) {
-            throw new DataAccessException("Error: Bad request with missing fields");
+            throw new DataAccessException("Error: bad request");
         }
 
         UserData user = userDAO.getUser(username);
         if(user == null || !user.password().equals(password)) {
-            throw new DataAccessException("Error: Not authorized");
+            throw new DataAccessException("Error: unauthorized");
         }
 
         String authToken = UUID.randomUUID().toString();
