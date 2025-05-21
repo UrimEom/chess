@@ -1,6 +1,8 @@
 package server;
 
 import dataaccess.*;
+import org.eclipse.jetty.server.Authentication;
+import service.UserService;
 import spark.*;
 
 import java.util.List;
@@ -15,11 +17,12 @@ public class Server {
         UserDAO userDAO = new MemoryUserDAO();
         AuthDAO authDAO = new MemoryAuthDAO();
         GameDAO gameDAO = new MemoryGameDAO();
+        UserService userService = new UserService(userDAO, authDAO);
 
         // Register your endpoints and handle exceptions here.
         Spark.post("/user", new RegisterHandler(userDAO, authDAO)::handler);
         Spark.post("/session", new LoginHandler(userDAO, authDAO)::handler);
-        Spark.delete("/session", new LogoutHandler(userDAO, authDAO)::handler);
+        Spark.delete("/session", new LogoutHandler(userService, authDAO)::handler);
         Spark.get("/game", new ListHandler(gameDAO, authDAO)::handler);
         Spark.post("/game", new CreateHandler(gameDAO, authDAO)::handler);
         Spark.put("/game", new JoinHandler(gameDAO, authDAO)::handler);

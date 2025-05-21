@@ -15,17 +15,19 @@ import java.util.Map;
 
 public class LogoutHandler {
     private final UserService userService;
+    private final AuthDAO authDAO;
     private final Gson gson = new Gson();
 
-    public LogoutHandler(UserDAO userDAO, AuthDAO authDAO) {
-        this.userService = new UserService(userDAO, authDAO);
+    public LogoutHandler(UserService userService, AuthDAO authDAO) {
+        this.userService = userService;
+        this.authDAO = authDAO;
     }
 
     public String handler(Request req, Response res) {
         try {
             String authToken = req.headers("authorization");
 
-            if(authToken == null) {
+            if(authToken == null || authDAO.getAuth(authToken) == null) {
                 res.status(401);
                 return gson.toJson(Map.of("message", "Error: unauthorized"));
             }
@@ -40,8 +42,9 @@ public class LogoutHandler {
             return gson.toJson(Map.of("message", e.getMessage()));
         } catch (Exception e) {
             res.status(500);
-            return gson.toJson(Map.of("message", "Error: sever error"));
+            return gson.toJson(Map.of("message", "Error: server error"));
         }
 
     }
+
 }
