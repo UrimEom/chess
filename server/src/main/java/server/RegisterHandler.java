@@ -44,8 +44,10 @@ public class RegisterHandler {
                 res.status(400);
             } else if (e.getMessage().equals("Error: already taken")) {
                 res.status(403);
+            } else {
+                res.status(500);
             }
-            return gson.toJson(Map.of("Message", e.getMessage()));
+            return gson.toJson(Map.of("message", e.getMessage()));
         } catch (Exception e) {
             res.status(500);
             return gson.toJson(Map.of("message", "Error: sever error"));

@@ -43,8 +43,10 @@ public class LoginHandler {
                 res.status(400);
             } else if (e.getMessage().equals("Error: unauthorized")) {
                 res.status(401);
+            } else {
+                res.status(500);
             }
-            return gson.toJson(Map.of("Message", e.getMessage()));
+            return gson.toJson(Map.of("message", e.getMessage()));
         } catch (Exception e) {
             res.status(500);
             return gson.toJson(Map.of("message", "Error: sever error"));
