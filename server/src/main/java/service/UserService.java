@@ -23,7 +23,7 @@ public class UserService {
         }
 
         if(userDAO.getUser(username) != null) {
-            throw new DataAccessException("Error: alreay taken");
+            throw new DataAccessException("Error: already taken");
         }
 
         UserData user = new UserData(username, password, email);
