@@ -1,13 +1,79 @@
 package service;
 
+import dataaccess.AuthDAO;
+import dataaccess.DataAccessException;
+import dataaccess.UserDAO;
+import model.AuthData;
+import model.UserData;
+import request.*;
+import result.*;
+
+import java.util.UUID;
+
 public class UserService {
-    public RegisterResult register(RegisterRequest registerRequest) {
+    private final UserDAO userDAO;
+    private final AuthDAO authDAO;
 
+    public UserService(UserDAO userDAO, AuthDAO authDAO) {
+        this.userDAO = userDAO;
+        this.authDAO = authDAO;
     }
-    public LoginResult login(LoginRequest loginRequest) {
 
-    }
-    public void logout(LogoutRequest logoutRequest) {
+    public AuthData register(String username, String password, String email) throws DataAccessException {
+        if(username == null || password == null || email == null) {
+            throw new DataAccessException("Error: bad request with missing fields");
+        }
 
+        if(userDAO.getUser(username) != null) {
+            throw new DataAccessException("Error: username is already taken");
+        }
+
+        UserData user = new UserData(username, password, email);
+        userDAO.createUser(user);
+
+        String authToken = UUID.randomUUID().toString();
+        AuthData auth = new AuthData(authToken, username);
+        authDAO.createAuth(auth);
+
+        return auth;
     }
+
+    public AuthData login(String username, String password) throws DataAccessException {
+        if(username == null || password == null) {
+            throw new DataAccessException("Error: Bad request with missing fields");
+        }
+
+        UserData user = userDAO.getUser(username);
+        if(user == null || !user.password().equals(password)) {
+            throw new DataAccessException("Error: Not authorized");
+        }
+
+        String authToken = UUID.randomUUID().toString();
+        AuthData auth = new AuthData(authToken, username);
+        authDAO.createAuth(auth);
+
+        return auth;
+    }
+
+    public void logout(String authToken) throws DataAccessException {
+//        if(authToken == null) {
+//            throw new DataAccessException("Error: Not authorized");
+//        } comment out this if this is not running
+
+        AuthData auth = authDAO.getAuth(authToken);
+        if(auth == null) {
+            throw new DataAccessException("Error invalid auth token");
+        }
+
+        authDAO.deleteAuth(authToken);
+    }
+//    public RegisterResult register(RegisterRequest registerRequest) {
+//        return null;
+//    }
+//    public LoginResult login(LoginRequest loginRequest) {
+//        return null;
+//    }
+//    public LogoutResult logout(LogoutRequest logoutRequest) {
+//        return null;
+//    }
 }
