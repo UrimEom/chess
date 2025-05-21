@@ -38,7 +38,9 @@ public class ChessBoard {
     public ChessPiece getPiece(ChessPosition position) {
         int row = position.getRow() - 1;
         int col = position.getColumn() - 1;
-        if(row < 0 || row >= 8 || col < 0 || col >= 8) return null;
+        if(row < 0 || row >= 8 || col < 0 || col >= 8) {
+            return null;
+        }
 
         return board[row][col];
 
@@ -84,7 +86,9 @@ public class ChessBoard {
 
     @Override
     public boolean equals(Object o) {
-        if(this == o) return true;
+        if(this == o) {
+            return true;
+        }
         if (o == null || getClass() != o.getClass()) {
             return false;
         }

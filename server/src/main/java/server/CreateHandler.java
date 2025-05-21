@@ -43,9 +43,9 @@ public class CreateHandler {
             return gson.toJson(Map.of("gameID", gameID));
 
         } catch (DataAccessException e) {
-            if (e.getMessage().equals("Error: bad request")) {
+            if ("Error: bad request".equals(e.getMessage())) {
                 res.status(400);
-            } else if (e.getMessage().equals("Error: unauthorized")) {
+            } else if ("Error: unauthorized".equals(e.getMessage())) {
                 res.status(401);
             } else {
                 res.status(500);
