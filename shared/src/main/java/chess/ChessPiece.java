@@ -90,14 +90,17 @@ public class ChessPiece {
         int row = myPosition.getRow();
         int col = myPosition.getColumn();
 
-        //white case
-        if(this.pieceColor == ChessGame.TeamColor.WHITE) {
-            int nextMove = row + 1;
+        int next = (pieceColor == ChessGame.TeamColor.WHITE) ? 1 : -1;
+        int startRow = (pieceColor == ChessGame.TeamColor.WHITE) ? 2 : 7;
+        int promotionRow = (pieceColor == ChessGame.TeamColor.WHITE) ? 8 : 1;
 
+        //white case
+        int nextMove = row + next;
+        if (nextMove >= 1 && nextMove <= 8) {
             //normal move
             ChessPosition nextForward = new ChessPosition(nextMove, col);
-            if(nextMove <= 8 && board.getPiece(nextForward) == null) {
-                if(nextMove == 8) { //promote
+            if(board.getPiece(nextForward) == null) {
+                if(nextMove == promotionRow) { //promote
                     ChessPiece.PieceType[] promotion = {PieceType.BISHOP, PieceType.KNIGHT, PieceType.ROOK, PieceType.QUEEN};
                     for (int i = 0; i < 4; i++) {
                         moves.add(new ChessMove(myPosition, nextForward, promotion[i]));
@@ -106,8 +109,8 @@ public class ChessPiece {
                     moves.add(new ChessMove(myPosition, nextForward, null));
 
                     //start move
-                    if(row == 2) {
-                        ChessPosition startForward = new ChessPosition(4, col);
+                    if(row == startRow) {
+                        ChessPosition startForward = new ChessPosition(row + 2 * next, col);
                         if(board.getPiece(startForward) == null) {
                             moves.add(new ChessMove(myPosition, startForward, null));
                         }
@@ -119,69 +122,25 @@ public class ChessPiece {
             int[] possibleCol = {-1, 1};
             for(int possible : possibleCol) {
                 int captureCol = col + possible;
-                if (captureCol >= 1 && captureCol <= 8 && nextMove <= 8) {
-                    ChessPosition capturePiece = new ChessPosition(nextMove, captureCol);
-                    ChessPiece piece = board.getPiece(capturePiece);
+                if (captureCol < 1 || captureCol > 8 || nextMove < 1 || nextMove > 8) { continue; }
 
-                    if (piece != null && piece.getTeamColor() != this.pieceColor) {
-                        if (nextMove == 8) { //promote and capture
-                            ChessPiece.PieceType[] promotion = {PieceType.BISHOP, PieceType.KNIGHT, PieceType.ROOK, PieceType.QUEEN};
-                            for (int i = 0; i < 4; i++) {
-                                moves.add(new ChessMove(myPosition, capturePiece, promotion[i]));
-                            }
-                        } else { //capture
-                            moves.add(new ChessMove(myPosition, capturePiece, null));
+                ChessPosition capturePiece = new ChessPosition(nextMove, captureCol);
+                ChessPiece piece = board.getPiece(capturePiece);
+
+                if (piece != null && piece.getTeamColor() != this.pieceColor) {
+                    if (nextMove == promotionRow) { //promote and capture
+                        ChessPiece.PieceType[] promotion = {PieceType.BISHOP, PieceType.KNIGHT, PieceType.ROOK, PieceType.QUEEN};
+                        for (int i = 0; i < 4; i++) {
+                            moves.add(new ChessMove(myPosition, capturePiece, promotion[i]));
                         }
-                    }
-                }
-            }
-            //black case
-        }else if(this.pieceColor == ChessGame.TeamColor.BLACK) {
-            int nextMove = row - 1;
-
-            //normal move
-            ChessPosition nextForward = new ChessPosition(nextMove, col);
-            if(nextMove >= 1 && board.getPiece(nextForward) == null) {
-                if(nextMove == 1) { //promote and move
-                    ChessPiece.PieceType[] promotion = {PieceType.BISHOP, PieceType.KNIGHT, PieceType.ROOK, PieceType.QUEEN};
-                    for (int i = 0; i < 4; i++) {
-                        moves.add(new ChessMove(myPosition, nextForward, promotion[i]));
-                    }
-                }else { //move
-                    moves.add(new ChessMove(myPosition, nextForward, null));
-
-                    //start move
-                    if(row == 7) {
-                        ChessPosition startForward = new ChessPosition(5, col);
-                        if(board.getPiece(startForward) == null) {
-                            moves.add(new ChessMove(myPosition, startForward, null));
-                        }
-                    }
-                }
-            }
-
-            //capture the enemy
-            int[] possibleCol = {-1, 1};
-            for(int possible : possibleCol) {
-                int captureCol = col + possible;
-                if(captureCol >= 1 && captureCol <= 8 && nextMove <= 8) {
-                    ChessPosition capturePiece = new ChessPosition(nextMove, captureCol);
-                    ChessPiece piece = board.getPiece(capturePiece);
-
-                    if (piece != null && piece.getTeamColor() != this.pieceColor) {
-                        if (nextMove == 1) { //promote and capture
-                            ChessPiece.PieceType[] promotion = {PieceType.BISHOP, PieceType.KNIGHT, PieceType.ROOK, PieceType.QUEEN};
-                            for (int i = 0; i < 4; i++) { //capture
-                                moves.add(new ChessMove(myPosition, capturePiece, promotion[i]));
-                            }
-                        }else {
-                            moves.add(new ChessMove(myPosition, capturePiece, null));
-                        }
+                    } else { //capture
+                        moves.add(new ChessMove(myPosition, capturePiece, null));
                     }
                 }
             }
         }
     }
+
     private void addLinearMove(ChessBoard board, ChessPosition myPosition, Collection<ChessMove> moves, int[] possibleRow, int[] possibleCol) {
         for (int i = 0; i < possibleRow.length; i++) {
             int newRow = myPosition.getRow() + possibleRow[i];
