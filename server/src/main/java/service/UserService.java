@@ -19,11 +19,11 @@ public class UserService {
 
     public AuthData register(String username, String password, String email) throws DataAccessException {
         if(username == null || password == null || email == null) {
-            throw new DataAccessException("Error: bad request with missing fields");
+            throw new DataAccessException("Error: bad request");
         }
 
         if(userDAO.getUser(username) != null) {
-            throw new DataAccessException("Error: username is already taken");
+            throw new DataAccessException("Error: alreay taken");
         }
 
         UserData user = new UserData(username, password, email);
