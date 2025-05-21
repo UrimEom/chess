@@ -29,12 +29,13 @@ public class CreateHandler {
             }
 
             JsonObject json = JsonParser.parseString(req.body()).getAsJsonObject();
-            String gameName = json.get("gameName").getAsString();
 
-            if(gameName == null) {
+            if(!json.has("gameName") || json.get("gameName").getAsString().isBlank()) {
                 res.status(400);
                 return gson.toJson(Map.of("message", "Error: bad request"));
             }
+
+            String gameName = json.get("gameName").getAsString();
 
             int gameID = gameService.createGame(gameName, authToken).gameID();
 
@@ -52,7 +53,7 @@ public class CreateHandler {
             return gson.toJson(Map.of("message", e.getMessage()));
         } catch (Exception e) {
             res.status(500);
-            return gson.toJson(Map.of("message", "Error: sever error"));
+            return gson.toJson(Map.of("message", "Error: server error"));
         }
     }
 }

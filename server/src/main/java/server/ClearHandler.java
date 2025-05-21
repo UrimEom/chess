@@ -35,7 +35,7 @@ public class ClearHandler {
 
         } catch (Exception e) {
             res.status(500);
-            return gson.toJson(Map.of("message", "Error: sever error"));
+            return gson.toJson(Map.of("message", "Error: server error"));
         }
     }
 }

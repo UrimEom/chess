@@ -34,11 +34,13 @@ public class ListHandler {
             return gson.toJson(Map.of("games", games));
 
         } catch (DataAccessException e) {
-            res.status(500);
-            return gson.toJson(Map.of("message", "Error: " + e.getMessage()));
-        } catch (Exception e) {
-            res.status(500);
-            return gson.toJson(Map.of("message", "Error: sever error"));
+            if (e.getMessage().equals("Error: unauthorized")) {
+                res.status(401);
+                return gson.toJson(Map.of("message", "Error: unauthorized"));
+            }else {
+                res.status(500);
+                return gson.toJson(Map.of("message", e.getMessage()));
+            }
         }
     }
 }

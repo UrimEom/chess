@@ -29,14 +29,19 @@ public class JoinHandler {
             }
 
             JsonObject json = JsonParser.parseString(req.body()).getAsJsonObject();
-            String playerColor = json.get("playerColor").getAsString();
-            int gameID = json.get("gameID").getAsInt();
 
-            if(playerColor == null || gameID < 0 || (!playerColor.equalsIgnoreCase("WHITE") && !playerColor.equalsIgnoreCase("BLACK"))) {
+            if(!json.has("playerColor") || !json.has("gameID")) {
                 res.status(400);
                 return gson.toJson(Map.of("message", "Error: bad request"));
             }
 
+            String playerColor = json.get("playerColor").getAsString();
+            int gameID = json.get("gameID").getAsInt();
+
+            if(playerColor == null || playerColor.isBlank() || (!playerColor.equalsIgnoreCase("WHITE") && !playerColor.equalsIgnoreCase("BLACK"))) {
+                res.status(400);
+                return gson.toJson(Map.of("message", "Error: bad request"));
+            }
             gameService.joinGame(gameID, playerColor, authToken);
 
             res.status(200);
@@ -55,7 +60,7 @@ public class JoinHandler {
             return gson.toJson(Map.of("message", e.getMessage()));
         } catch (Exception e) {
             res.status(500);
-            return gson.toJson(Map.of("message", "Error: sever error"));
+            return gson.toJson(Map.of("message", "Error: server error"));
         }
     }
 }
