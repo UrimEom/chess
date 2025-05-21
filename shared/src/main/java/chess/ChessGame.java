@@ -397,7 +397,8 @@ public class ChessGame {
         for(int row = 1; row <= 8; row++) {
             for(int col = 1; col <= 8; col++) {
                 ChessPosition position = new ChessPosition(row,col);
-                if(board.getPiece(position) != null && board.getPiece(position).getPieceType() == ChessPiece.PieceType.KING && board.getPiece(position).getTeamColor() == teamColor) {
+                ChessPiece piece = board.getPiece(position);
+                if(piece != null && piece.getPieceType() == ChessPiece.PieceType.KING && piece.getTeamColor() == teamColor) {
                     kingPos = position;
                     break;
                 }
@@ -411,11 +412,13 @@ public class ChessGame {
         for(int row = 1; row <= 8; row++) {
             for(int col = 1; col <= 8; col++) {
                 ChessPosition position = new ChessPosition(row, col);
-                if(board.getPiece(position) != null && board.getPiece(position).getTeamColor() != board.getPiece(kingPos).getTeamColor()) {
-                    Collection<ChessMove> moves = board.getPiece(position).pieceMoves(board, position);
-                    for(ChessMove move : moves) {
-                        if(kingPos.equals(move.getEndPosition())) { return true; }
-                    }
+                ChessPiece enemy = board.getPiece(position);
+
+                if(enemy == null || enemy.getTeamColor() == board.getPiece(kingPos).getTeamColor()) { continue; }
+
+                Collection<ChessMove> moves = board.getPiece(position).pieceMoves(board, position);
+                for(ChessMove move : moves) {
+                    if(kingPos.equals(move.getEndPosition())) { return true; }
                 }
             }
         }

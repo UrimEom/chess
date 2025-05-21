@@ -25,7 +25,10 @@ public class LoginHandler {
         try {
             JsonObject json = JsonParser.parseString(req.body()).getAsJsonObject();
 
-            if(!json.has("username") || !json.has("password") || json.get("username").getAsString().isBlank() || json.get("password").getAsString().isBlank()) {
+            if(!json.has("username") ||
+                    !json.has("password") ||
+                    json.get("username").getAsString().isBlank() ||
+                    json.get("password").getAsString().isBlank()) {
                 res.status(400);
                 return gson.toJson(Map.of("message", "Error: bad request"));
             }
