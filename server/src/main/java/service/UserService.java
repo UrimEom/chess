@@ -5,8 +5,6 @@ import dataaccess.DataAccessException;
 import dataaccess.UserDAO;
 import model.AuthData;
 import model.UserData;
-import request.*;
-import result.*;
 
 import java.util.UUID;
 
@@ -56,10 +54,6 @@ public class UserService {
     }
 
     public void logout(String authToken) throws DataAccessException {
-//        if(authToken == null) {
-//            throw new DataAccessException("Error: Not authorized");
-//        } comment out this if this is not running
-
         AuthData auth = authDAO.getAuth(authToken);
         if(auth == null) {
             throw new DataAccessException("Error invalid auth token");
@@ -67,13 +61,4 @@ public class UserService {
 
         authDAO.deleteAuth(authToken);
     }
-//    public RegisterResult register(RegisterRequest registerRequest) {
-//        return null;
-//    }
-//    public LoginResult login(LoginRequest loginRequest) {
-//        return null;
-//    }
-//    public LogoutResult logout(LogoutRequest logoutRequest) {
-//        return null;
-//    }
 }
