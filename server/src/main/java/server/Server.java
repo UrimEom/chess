@@ -23,6 +23,7 @@ public class Server {
         Spark.get("/game", new ListHandler(gameDAO, authDAO)::handler);
         Spark.post("/game", new CreateHandler(gameDAO, authDAO)::handler);
         Spark.put("/game", new JoinHandler(gameDAO, authDAO)::handler);
+        Spark.delete("/db", new ClearHandler(userDAO, authDAO, gameDAO)::handler);
 
         //This line initializes the server and can be removed once you have a functioning endpoint 
         Spark.init();
