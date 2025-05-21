@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class ClearServiceTest {
 
     @Test
-    void clear() throws DataAccessException {
+    void clearPositive() throws DataAccessException {
         MemoryUserDAO userDAO = new MemoryUserDAO();
         MemoryAuthDAO authDAO = new MemoryAuthDAO();
         MemoryGameDAO gameDAO = new MemoryGameDAO();
