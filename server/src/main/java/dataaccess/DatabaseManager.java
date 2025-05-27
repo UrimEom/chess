@@ -8,12 +8,17 @@ public class DatabaseManager {
     private static String dbUsername;
     private static String dbPassword;
     private static String connectionUrl;
+    private static final Properties properties = new Properties();
 
     /*
      * Load the database information for the db.properties file.
      */
     static {
-        loadPropertiesFromResources();
+        try {
+            loadPropertiesFromResources();
+        }catch (Exception e) {
+            throw new RuntimeException("Unable to load database properties");
+        }
     }
 
     /**
