@@ -14,11 +14,6 @@ public class DatabaseManager {
      */
     static {
         loadPropertiesFromResources();
-//        try {
-//            loadPropertiesFromResources();
-//        }catch (Exception e) {
-//            throw new RuntimeException("Unable to load database properties");
-//        }
     }
 
     /**
