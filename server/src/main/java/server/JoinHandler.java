@@ -57,7 +57,7 @@ public class JoinHandler {
             } else {
                 res.status(500);
             }
-            return gson.toJson(Map.of("message", e.getMessage()));
+            return gson.toJson(Map.of("message", "Error: " + e.getMessage()));
         } catch (Exception e) {
             res.status(500);
             return gson.toJson(Map.of("message", "Error: server error"));

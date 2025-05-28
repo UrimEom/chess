@@ -39,7 +39,7 @@ public class ListHandler {
                 return gson.toJson(Map.of("message", "Error: unauthorized"));
             }else {
                 res.status(500);
-                return gson.toJson(Map.of("message", e.getMessage()));
+                return gson.toJson(Map.of("message", "Error: " + e.getMessage()));
             }
         }
     }

@@ -14,19 +14,27 @@ public class Server {
 
         Spark.staticFiles.location("web");
 
-        UserDAO userDAO = new MemoryUserDAO();
-        AuthDAO authDAO = new MemoryAuthDAO();
-        GameDAO gameDAO = new MemoryGameDAO();
-        UserService userService = new UserService(userDAO, authDAO);
+        try {
+            DatabaseManager.createDatabase();
 
-        // Register your endpoints and handle exceptions here.
-        Spark.post("/user", new RegisterHandler(userDAO, authDAO)::handler);
-        Spark.post("/session", new LoginHandler(userDAO, authDAO)::handler);
-        Spark.delete("/session", new LogoutHandler(userService, authDAO)::handler);
-        Spark.get("/game", new ListHandler(gameDAO, authDAO)::handler);
-        Spark.post("/game", new CreateHandler(gameDAO, authDAO)::handler);
-        Spark.put("/game", new JoinHandler(gameDAO, authDAO)::handler);
-        Spark.delete("/db", new ClearHandler(userDAO, authDAO, gameDAO)::handler);
+            UserDAO userDAO = new MySqlUserDAO();
+            AuthDAO authDAO = new MySqlAuthDAO();
+            GameDAO gameDAO = new MySqlGameDAO();
+
+            UserService userService = new UserService(userDAO, authDAO);
+
+            // Register your endpoints and handle exceptions here.
+            Spark.post("/user", new RegisterHandler(userDAO, authDAO)::handler);
+            Spark.post("/session", new LoginHandler(userDAO, authDAO)::handler);
+            Spark.delete("/session", new LogoutHandler(userService, authDAO)::handler);
+            Spark.get("/game", new ListHandler(gameDAO, authDAO)::handler);
+            Spark.post("/game", new CreateHandler(gameDAO, authDAO)::handler);
+            Spark.put("/game", new JoinHandler(gameDAO, authDAO)::handler);
+            Spark.delete("/db", new ClearHandler(userDAO, authDAO, gameDAO)::handler);
+        }catch (Exception e) {
+            e.printStackTrace(); //FIND THE PROBLEM!!!!!
+            throw new RuntimeException("Server setup failed", e);
+        }
 
         //This line initializes the server and can be removed once you have a functioning endpoint 
         Spark.init();
