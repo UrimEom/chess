@@ -17,8 +17,7 @@ public class MySqlUserDAO implements UserDAO {
                 `password` VARCHAR(255) NOT NULL,
                 `email` VARCHAR(255) NULL,
                 PRIMARY KEY (`id`),
-                UNIQUE (username)
-                );
+                UNIQUE (username));
                 """;
             try (var preparedStatement = conn.prepareStatement(sql)) {
                 preparedStatement.executeUpdate();
