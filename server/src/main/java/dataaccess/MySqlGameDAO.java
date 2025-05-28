@@ -19,7 +19,7 @@ public class MySqlGameDAO implements GameDAO {
                `id` INT NOT NULL AUTO_INCREMENT,
                `whiteUsername` VARCHAR(255) NULL,
                `blackUsername` VARCHAR(255) NULL,
-               `gameName` VARCHAR(255) NULL,
+               `gameName` VARCHAR(255) NOT NULL,
                `gameData` TEXT NULL,
                PRIMARY KEY (`id`));
                """;
@@ -114,7 +114,10 @@ public class MySqlGameDAO implements GameDAO {
                 statement.setString(4, serializeGame(game.game()));
                 statement.setInt(5, game.gameID());
 
-                statement.executeUpdate();
+                int updated = statement.executeUpdate();
+                if(updated == 0) {
+                    throw new DataAccessException("No game found with ID: " + game.gameID());
+                }
             }
         }catch(SQLException ex) {
             throw new DataAccessException("Unable to update game", ex);
