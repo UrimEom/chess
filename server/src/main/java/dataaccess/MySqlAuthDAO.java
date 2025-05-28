@@ -1,7 +1,6 @@
 package dataaccess;
 
 import model.AuthData;
-import model.UserData;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -88,7 +87,5 @@ public class MySqlAuthDAO implements AuthDAO {
         }catch(SQLException ex) {
             throw new DataAccessException("Unable to clear auth_tokens table", ex);
         }
-
     }
-
 }
