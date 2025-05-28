@@ -17,9 +17,12 @@ public class Server {
         try {
             DatabaseManager.createDatabase();
 
-            UserDAO userDAO = new MySqlUserDAO();
-            AuthDAO authDAO = new MySqlAuthDAO();
-            GameDAO gameDAO = new MySqlGameDAO();
+            MySqlUserDAO userDAO = new MySqlUserDAO();
+            MySqlAuthDAO authDAO = new MySqlAuthDAO();
+            MySqlGameDAO gameDAO = new MySqlGameDAO();
+            userDAO.createTable();
+            authDAO.createTable();
+            gameDAO.createTable();
 
             UserService userService = new UserService(userDAO, authDAO);
 
@@ -32,7 +35,6 @@ public class Server {
             Spark.put("/game", new JoinHandler(gameDAO, authDAO)::handler);
             Spark.delete("/db", new ClearHandler(userDAO, authDAO, gameDAO)::handler);
         }catch (Exception e) {
-            e.printStackTrace(); //FIND THE PROBLEM!!!!!
             throw new RuntimeException("Server setup failed", e);
         }
 
