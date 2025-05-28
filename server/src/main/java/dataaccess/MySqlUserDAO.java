@@ -8,20 +8,18 @@ import java.sql.SQLException;
 
 public class MySqlUserDAO implements UserDAO {
 
-    public MySqlUserDAO() throws DataAccessException {
-        DatabaseManager.createDatabase();
+    public void createTable() throws DataAccessException {
         try (var conn = DatabaseManager.getConnection()) {
-            String createStatements = """       
-                CREATE TABLE `chess`.`users` (
+        String sql = """
+                CREATE TABLE IF NOT EXISTS users (
                 `id` INT NOT NULL AUTO_INCREMENT,
                 `username` VARCHAR(255) NOT NULL,
                 `password` VARCHAR(255) NOT NULL,
                 `email` VARCHAR(255) NULL,
                 PRIMARY KEY (`id`),
-                UNIQUE INDEX `username_UNIQUE` (`username` ASC) VISIBLE);
+                UNIQUE (username);
                 """;
-
-            try (var preparedStatement = conn.prepareStatement(createStatements)) {
+            try (var preparedStatement = conn.prepareStatement(sql)) {
                 preparedStatement.executeUpdate();
             }
 

@@ -7,20 +7,18 @@ import java.sql.SQLException;
 
 public class MySqlAuthDAO implements AuthDAO {
 
-    public MySqlAuthDAO() throws DataAccessException {
-        DatabaseManager.createDatabase();
+    public void createTable() throws DataAccessException {
         try (var conn = DatabaseManager.getConnection()) {
-            String createStatements =
-                    """
-                CREATE TABLE `chess`.`auth_tokens` (
+            String sql = """
+                CREATE TABLE IF NOT EXISTS auth_tokens (
                 `authToken` VARCHAR(255) NOT NULL,
                 `username` VARCHAR(255) NOT NULL,
                 PRIMARY KEY (`authToken`));
                 """;
-
-            try (var preparedStatement = conn.prepareStatement(createStatements)) {
+            try (var preparedStatement = conn.prepareStatement(sql)) {
                 preparedStatement.executeUpdate();
             }
+
         }catch (SQLException ex) {
             throw new DataAccessException("Unable to configure database", ex);
         }
@@ -64,7 +62,7 @@ public class MySqlAuthDAO implements AuthDAO {
 
     @Override
     public void deleteAuth(String authToken) throws DataAccessException {
-        String sql = "DELETE FROM auth_tokens WHERE token = ?";
+        String sql = "DELETE FROM auth_tokens WHERE authToken = ?";
 
         try (var conn = DatabaseManager.getConnection()) {
             try (var statement = conn.prepareStatement(sql)) {

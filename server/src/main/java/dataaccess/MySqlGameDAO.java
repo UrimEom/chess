@@ -12,23 +12,21 @@ import java.util.Collection;
 
 public class MySqlGameDAO implements GameDAO {
 
-    public MySqlGameDAO() throws DataAccessException {
-        DatabaseManager.createDatabase();
+    public void createTable() throws DataAccessException {
         try (var conn = DatabaseManager.getConnection()) {
-            String createStatements =
-                    """
-               CREATE TABLE `chess`.`games` (
+            String sql = """
+                CREATE TABLE IF NOT EXISTS games (
                `id` INT NOT NULL AUTO_INCREMENT,
                `whiteUsername` VARCHAR(255) NULL,
                `blackUsername` VARCHAR(255) NULL,
                `gameName` VARCHAR(255) NULL,
                `gameData` TEXT NULL,
                PRIMARY KEY (`id`));
-                """;
-
-            try (var preparedStatement = conn.prepareStatement(createStatements)) {
+               """;
+            try (var preparedStatement = conn.prepareStatement(sql)) {
                 preparedStatement.executeUpdate();
             }
+
         }catch (SQLException ex) {
             throw new DataAccessException("Unable to configure database", ex);
         }
