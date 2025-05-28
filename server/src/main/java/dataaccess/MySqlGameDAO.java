@@ -4,6 +4,7 @@ import chess.ChessGame;
 import com.google.gson.Gson;
 import model.GameData;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -14,23 +15,22 @@ public class MySqlGameDAO implements GameDAO {
     public MySqlGameDAO() throws DataAccessException {
         DatabaseManager.createDatabase();
         try (var conn = DatabaseManager.getConnection()) {
-            String[] createStatements = {
+            String createStatements =
                     """
-                CREATE TABLE IF NOT EXISTS games (
-                id int NOT NULL PRIMARY KEY,
-                whiteUsername VARCHAR(255),
-                blackUsername VARCHAR(255),
-                gameName VARCHAR(255) NOT NULL,
-                gameData TEXT);
-                """
-            };
-            for(var statement : createStatements) {
-                try (var preparedStatement = conn.prepareStatement(statement)) {
-                    preparedStatement.executeUpdate();
-                }
+               CREATE TABLE `chess`.`games` (
+               `id` INT NOT NULL AUTO_INCREMENT,
+               `whiteUsername` VARCHAR(255) NULL,
+               `blackUsername` VARCHAR(255) NULL,
+               `gameName` VARCHAR(255) NULL,
+               `gameData` TEXT NULL,
+               PRIMARY KEY (`id`));
+                """;
+
+            try (var preparedStatement = conn.prepareStatement(createStatements)) {
+                preparedStatement.executeUpdate();
             }
         }catch (SQLException ex) {
-            throw new DataAccessException("Unable to configure database: %s", ex);
+            throw new DataAccessException("Unable to configure database", ex);
         }
     }
 
@@ -39,14 +39,15 @@ public class MySqlGameDAO implements GameDAO {
         String sql = "INSERT INTO games (whiteUsername, blackUsername, gameName, gameData) VALUES (?, ?, ?, ?)";
 
         try (var conn = DatabaseManager.getConnection()) {
-            try (var statement = conn.prepareStatement(sql)) {
+            try (var statement = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
                 statement.setString(1, game.whiteUsername());
                 statement.setString(2, game.blackUsername());
                 statement.setString(3, game.gameName());
                 statement.setString(4, serializeGame(game.game()));
 
                 statement.executeUpdate();
-                try (ResultSet rs = statement.executeQuery()) {
+
+                try (ResultSet rs = statement.getGeneratedKeys()) {
                     if(rs.next()) {
                         return rs.getInt(1);
                     }else {
@@ -66,7 +67,7 @@ public class MySqlGameDAO implements GameDAO {
         try (var conn = DatabaseManager.getConnection()) {
             try (var statement = conn.prepareStatement(sql)) {
                 statement.setInt(1, gameID);
-                try (ResultSet rs = statement.executeQuery()) {
+                try (var rs = statement.executeQuery()) {
                     if(rs.next()) {
                         return new GameData(rs.getInt("id"),
                                 rs.getString("whiteUsername"),

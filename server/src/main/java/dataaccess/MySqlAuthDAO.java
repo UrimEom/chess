@@ -10,20 +10,19 @@ public class MySqlAuthDAO implements AuthDAO {
     public MySqlAuthDAO() throws DataAccessException {
         DatabaseManager.createDatabase();
         try (var conn = DatabaseManager.getConnection()) {
-            String[] createStatements = {
+            String createStatements =
                     """
-                CREATE TABLE IF NOT EXISTS auth_tokens (
-                authToken VARCHAR(255) PRIMARY KEY,
-                username VARCHAR(255) NOT NULL);
-                """
-            };
-            for(var statement : createStatements) {
-                try (var preparedStatement = conn.prepareStatement(statement)) {
-                    preparedStatement.executeUpdate();
-                }
+                CREATE TABLE `chess`.`auth_tokens` (
+                `authToken` VARCHAR(255) NOT NULL,
+                `username` VARCHAR(255) NOT NULL,
+                PRIMARY KEY (`authToken`));
+                """;
+
+            try (var preparedStatement = conn.prepareStatement(createStatements)) {
+                preparedStatement.executeUpdate();
             }
         }catch (SQLException ex) {
-            throw new DataAccessException("Unable to configure database: %s", ex);
+            throw new DataAccessException("Unable to configure database", ex);
         }
     }
 
@@ -35,6 +34,7 @@ public class MySqlAuthDAO implements AuthDAO {
             try (var statement = conn.prepareStatement(sql)) {
                statement.setString(1, auth.authToken());
                statement.setString(2, auth.username());
+               statement.executeUpdate();
             }
         }catch(SQLException ex) {
             throw new DataAccessException("Unable to insert auth token", ex);
@@ -43,7 +43,7 @@ public class MySqlAuthDAO implements AuthDAO {
 
     @Override
     public AuthData getAuth(String authToken) throws DataAccessException {
-        String sql = "SELECT * FROM auth_tokens WHERE authToken = ?";
+        String sql = "SELECT authToken, username FROM auth_tokens WHERE authToken = ?";
 
         try (var conn = DatabaseManager.getConnection()) {
             try (var statement = conn.prepareStatement(sql)) {
