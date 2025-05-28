@@ -8,7 +8,25 @@ import java.sql.SQLException;
 public class MySqlUserDAO implements UserDAO {
 
     public MySqlUserDAO() throws DataAccessException {
-        configureDatabase();
+        DatabaseManager.createDatabase();
+        try (var conn = DatabaseManager.getConnection()) {
+            String[] createStatements = {
+                    """
+                CREATE TABLE IF NOT EXISTS users (
+                id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                username VARCHAR(255) NOT NULL UNIQUE,
+                password VARCHAR(255) NOT NULL,
+                email VARCHAR(255));
+                """
+            };
+            for(var statement : createStatements) {
+                try (var preparedStatement = conn.prepareStatement(statement)) {
+                    preparedStatement.executeUpdate();
+                }
+            }
+        }catch (SQLException ex) {
+            throw new DataAccessException("Unable to configure database: %s", ex);
+        }
     }
 
     @Override
@@ -61,26 +79,4 @@ public class MySqlUserDAO implements UserDAO {
         }
     }
 
-    private final String[] createStatements =  {
-            """
-                CREATE TABLE IF NOT EXISTS users (
-                id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                username VARCHAR(255) NOT NULL UNIQUE,
-                password VARCHAR(255) NOT NULL,
-                email VARCHAR(255));
-                """
-    };
-
-    private void configureDatabase() throws DataAccessException {
-        DatabaseManager.createDatabase();
-        try (var conn = DatabaseManager.getConnection()) {
-            for(var statement : createStatements) {
-                try (var preparedStatement = conn.prepareStatement(statement)) {
-                    preparedStatement.executeUpdate();
-                }
-            }
-        }catch (SQLException ex) {
-            throw new DataAccessException("Unable to configure database: %s", ex);
-        }
-    }
 }
