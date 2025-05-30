@@ -95,23 +95,31 @@ public class PostloginRepl {
     }
 
     private void doCreateGame(String name) {
-        server.createGame(name, auth.authToken());
-        System.out.println("Created game is " + name);
+        try {
+            server.createGame(name, auth.authToken());
+            System.out.println("Created game is " + name);
+        }catch (Exception ex) {
+            System.out.println("Create failed. Please try again.");
+        }
     }
 
     private void doListGames() {
-        gameLists = server.listGames(auth.authToken());
-
-        if(gameLists != null && !gameLists.isEmpty()) {
-            System.out.println("Existing games: ");
-            for (GameData game : gameLists) {
-                String white = game.whiteUsername() != null ? game.whiteUsername() : "None";
-                String black = game.blackUsername() != null ? game.blackUsername() : "None";
-                System.out.println(game.gameName() + " | " + white + " | " + black);
+        try {
+            gameLists = server.listGames(auth.authToken());
+            if (gameLists != null && !gameLists.isEmpty()) {
+                System.out.println("Existing games: ");
+                for (GameData game : gameLists) {
+                    String white = game.whiteUsername() != null ? game.whiteUsername() : "None";
+                    String black = game.blackUsername() != null ? game.blackUsername() : "None";
+                    System.out.println(game.gameName() + " | " + white + " | " + black);
+                }
+            } else {
+                //when there is no game
+                System.out.println("No games");
             }
+        }catch(Exception ex) {
+            System.out.println("List game failed. Please try again.");
         }
-        //when there is no game
-        System.out.println("No games");
     }
 
     private void doJoinGame(String stringNum, String color) {
