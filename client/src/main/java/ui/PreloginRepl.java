@@ -18,8 +18,7 @@ public class PreloginRepl {
     public void run() {
         out.println("Welcome to 240 chess! Type Help to get started.");
 
-        boolean running = true;
-        while(running) {
+        while(true) {
             out.print("\n[LOGGED_OUT] >>> ");
             String input = scanner.nextLine().trim();
             String[] inputs = input.split(" ");
@@ -30,26 +29,28 @@ public class PreloginRepl {
 
             try {
                 switch (command) {
-                    case "help":
-                        printHelp();
-                    case "quit":
+                    case "help" -> printHelp();
+                    case "quit" -> {
                         return;
-                    case "login":
-                        if(inputs.length != 3) {
+                    }
+                    case "login" -> {
+                        if (inputs.length != 3) {
                             System.out.println("USE: login <USERNAME> <PASSWORD>");
-                        }else {
+                        } else {
                             doLogin(inputs[1], inputs[2]);
                         }
-                    case "register":
-                        if(inputs.length != 4) {
+                    }
+                    case "register" -> {
+                        if (inputs.length != 4) {
                             System.out.println("USE: register <USERNAME> <PASSWORD> <EMAIL>");
-                        }else {
+                        } else {
                             doRegister(inputs[1], inputs[2], inputs[3]);
                         }
-                    default:
+                    }
+                    default -> {
                         System.out.println("Invalid command: please try again");
                         printHelp();
-                        break;
+                    }
                 }
             }catch (Exception ex) {
                 System.out.println("Error: " + ex.getMessage());
@@ -58,21 +59,21 @@ public class PreloginRepl {
     }
 
     private void printHelp() {
-        out.println("register <USERNAME> <PASSWORD> <EMAIL> - to create an account");
-        out.println("login <USERNAME> <PASSWORD> - to play chess");
-        out.println("quit - playing chess");
-        out.println("help - with possible commands");
+        out.println("register <USERNAME> <PASSWORD> <EMAIL> -> to create an account");
+        out.println("login <USERNAME> <PASSWORD> -> to play chess");
+        out.println("quit -> to stop playing chess");
+        out.println("help -> to show possible commands");
     }
 
     private void doLogin(String username, String password) {
         AuthData auth = server.login(username, password);
         System.out.println("Logged in as " + auth.username());
-        //new PostloginRepl(server, auth).run();
+        new PostloginRepl(server, auth).run();
     }
 
     private void doRegister(String username, String password, String email) {
         AuthData auth = server.register(username, password, email);
         System.out.println("Registered and logged in as " + auth.username());
-        //new PostloginRepl(server,auth).run();
+        new PostloginRepl(server,auth).run();
     }
 }
