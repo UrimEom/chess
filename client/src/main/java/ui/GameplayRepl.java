@@ -19,36 +19,48 @@ public class GameplayRepl {
     }
 
     public void drawBoard() {
-        ChessBoard board = game.getBoard();
+        try {
+            ChessBoard board = game.getBoard();
 
-        //draw headers
-        out.print("   ");
-        if(color == ChessGame.TeamColor.BLACK) {
-            for(char c = 'h'; c >= 'a'; c--) { out.printf(" %c ", c); }
-        }else {
-            for(char c = 'a'; c <= 'h'; c++) { out.printf(" %c ", c); }
-        }
-        out.println();
-
-        //draw rows
-        if(color == ChessGame.TeamColor.BLACK) {
-            for(int row = 1; row <= 8; row++) {
-                drawBoardRow(out, board, row, true);
+            //draw headers
+            out.print("   ");
+            if (color == ChessGame.TeamColor.BLACK) {
+                for (char c = 'h'; c >= 'a'; c--) {
+                    out.printf(" %c ", c);
+                }
+            } else {
+                for (char c = 'a'; c <= 'h'; c++) {
+                    out.printf(" %c ", c);
+                }
             }
-        }else {
-            for(int row = 8; row >= 1; row--) {
-                drawBoardRow(out, board, row, false);
-            }
-        }
+            out.println();
 
-        //draw footers
-        out.print("   ");
-        if(color == ChessGame.TeamColor.BLACK) {
-            for(char c = 'h'; c >= 'a'; c--) { out.printf(" %c ", c); }
-        }else {
-            for(char c = 'a'; c <= 'h'; c++) { out.printf(" %c ", c); }
+            //draw rows
+            if (color == ChessGame.TeamColor.BLACK) {
+                for (int row = 1; row <= 8; row++) {
+                    drawBoardRow(out, board, row, true);
+                }
+            } else {
+                for (int row = 8; row >= 1; row--) {
+                    drawBoardRow(out, board, row, false);
+                }
+            }
+
+            //draw footers
+            out.print("   ");
+            if (color == ChessGame.TeamColor.BLACK) {
+                for (char c = 'h'; c >= 'a'; c--) {
+                    out.printf(" %c ", c);
+                }
+            } else {
+                for (char c = 'a'; c <= 'h'; c++) {
+                    out.printf(" %c ", c);
+                }
+            }
+            out.println();
+        }catch(Exception ex) {
+            System.out.println("Display the board failed. Please try again.");
         }
-        out.println();
     }
 
     private void drawBoardRow(PrintStream out, ChessBoard board, int row, boolean isBlack) {
