@@ -23,7 +23,13 @@ public class RegisterHandler {
 
     public String handler(Request req, Response res) {
         try {
-            JsonObject json = JsonParser.parseString(req.body()).getAsJsonObject();
+            String body = req.body();
+            if(body == null || body.isBlank()) {
+                res.status(400);
+                return gson.toJson(Map.of("message", "Error: request body was missing"));
+            }
+
+            JsonObject json = JsonParser.parseString(body).getAsJsonObject();
 
             if(!json.has("username") ||
                     !json.has("password") ||
@@ -54,6 +60,7 @@ public class RegisterHandler {
             }
             return gson.toJson(Map.of("message", "Error: " + e.getMessage()));
         } catch (Exception e) {
+            e.printStackTrace();
             res.status(500);
             return gson.toJson(Map.of("message", "Error: server error"));
         }
