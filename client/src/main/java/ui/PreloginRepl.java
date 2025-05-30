@@ -53,7 +53,7 @@ public class PreloginRepl {
                     }
                 }
             }catch (Exception ex) {
-                System.out.println("Error: " + ex.getMessage());
+                System.out.println("Please try again.");
             }
         }
     }
@@ -66,14 +66,22 @@ public class PreloginRepl {
     }
 
     private void doLogin(String username, String password) {
-        AuthData auth = server.login(username, password);
-        System.out.println("Logged in as " + auth.username());
-        new PostloginRepl(server, auth).run();
+        try {
+            AuthData auth = server.login(username, password);
+            System.out.println("Logged in as " + auth.username());
+            new PostloginRepl(server, auth).run();
+        }catch (Exception ex) {
+            System.out.println("Login failed. Please try again.");
+        }
     }
 
     private void doRegister(String username, String password, String email) {
-        AuthData auth = server.register(username, password, email);
-        System.out.println("Registered and logged in as " + auth.username());
-        new PostloginRepl(server,auth).run();
+        try {
+            AuthData auth = server.register(username, password, email);
+            System.out.println("Registered and logged in as " + auth.username());
+            new PostloginRepl(server, auth).run();
+        }catch(Exception ex) {
+            System.out.println("Register failed. Please try again.");
+        }
     }
 }
