@@ -1,5 +1,6 @@
 package ui;
 
+import chess.ChessGame;
 import model.AuthData;
 import model.GameData;
 
@@ -57,6 +58,10 @@ public class PostloginRepl {
                             System.out.println("USE: join <ID> [WHITE|BLACK]");
                         }else {
                             doJoinGame(inputs[1], inputs[2]);
+
+                            String color = inputs[2].toUpperCase();
+                            ChessGame.TeamColor playerColor = color.equals("BLACK") ? ChessGame.TeamColor.BLACK : ChessGame.TeamColor.WHITE;
+                            printBoard(playerColor);
                         }
                     }
                     case "observe" -> {
@@ -64,6 +69,8 @@ public class PostloginRepl {
                             System.out.println("USE: observe <ID>");
                         }else {
                             doObserveGame(inputs[1]);
+
+                            printBoard(null);
                         }
                     }
                     default -> {
@@ -143,5 +150,11 @@ public class PostloginRepl {
         }catch (Exception ex) {
             System.out.println("Invalid process. Please try again.");
         }
+    }
+
+    private void printBoard(ChessGame.TeamColor color) {
+        ChessGame game = new ChessGame();
+        GameplayRepl gameUI = new GameplayRepl(game, color);
+        gameUI.drawBoard();
     }
 }
