@@ -8,6 +8,7 @@ import model.UserData;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -86,8 +87,9 @@ public class ServerFacade {
             if(request != null) {
                 http.setDoOutput(true);
                 http.setRequestProperty("Content-Type", "application/json");
-                try (OutputStream osReq = http.getOutputStream()) {
-                    gson.toJson(request, new OutputStreamWriter(osReq));
+                try (OutputStream osReq = http.getOutputStream(); OutputStreamWriter writer = new OutputStreamWriter(osReq, StandardCharsets.UTF_8)) {
+                    gson.toJson(request, writer);
+                    writer.flush();
                 }
             }
 
