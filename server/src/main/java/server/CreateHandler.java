@@ -6,6 +6,7 @@ import com.google.gson.JsonParser;
 import dataaccess.AuthDAO;
 import dataaccess.DataAccessException;
 import dataaccess.GameDAO;
+import model.GameData;
 import service.GameService;
 import spark.Request;
 import spark.Response;
@@ -28,6 +29,12 @@ public class CreateHandler {
                 return gson.toJson(Map.of("message", "Error: unauthorized"));
             }
 
+            String body = req.body();
+            if(body == null || body.isBlank()) {
+                res.status(400);
+                return gson.toJson(Map.of("message", "Error: request body was missing"));
+            }
+
             JsonObject json = JsonParser.parseString(req.body()).getAsJsonObject();
 
             if(!json.has("gameName") || json.get("gameName").getAsString().isBlank()) {
@@ -37,10 +44,10 @@ public class CreateHandler {
 
             String gameName = json.get("gameName").getAsString();
 
-            int gameID = gameService.createGame(gameName, authToken).gameID();
+            GameData game = gameService.createGame(gameName, authToken);
 
             res.status(200);
-            return gson.toJson(Map.of("gameID", gameID));
+            return gson.toJson(game);
 
         } catch (DataAccessException e) {
             if ("Error: bad request".equals(e.getMessage())) {
