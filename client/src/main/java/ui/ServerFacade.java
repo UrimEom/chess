@@ -94,7 +94,7 @@ public class ServerFacade {
             if(http.getResponseCode() >= 400) {
                 try (InputStream error = http.getErrorStream()) {
                     String errorMessage = new BufferedReader(new InputStreamReader(error)).readLine();
-                    throw new RuntimeException("Error: " + errorMessage);
+                    throw new RuntimeException(errorMessage);
                 }
             }
 
