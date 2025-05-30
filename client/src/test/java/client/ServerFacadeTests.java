@@ -6,6 +6,8 @@ import org.junit.jupiter.api.*;
 import server.Server;
 import ui.ServerFacade;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 
@@ -77,5 +79,17 @@ public class ServerFacadeTests {
         assertEquals("game1", game.gameName());
     }
 
+    @Test
+    public void createGameNegative() {
+        assertThrows(Exception.class, () -> facade.createGame("game", "invalid token"));
+    }
 
+    @Test
+    public void listGamesPositive() {
+        AuthData auth = facade.register("tester6", "password6", "tester6@example.com");
+        facade.createGame("game2", auth.authToken());
+        List<GameData> games = facade.listGames(auth.authToken());
+        assertNotNull(games);
+        assertTrue(games.size() >= 1);
+    }
 }
