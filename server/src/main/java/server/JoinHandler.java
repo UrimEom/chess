@@ -30,15 +30,24 @@ public class JoinHandler {
 
             JsonObject json = JsonParser.parseString(req.body()).getAsJsonObject();
 
-            if(!json.has("playerColor") || !json.has("gameID")) {
+            if(!json.has("gameID") || json.get("gameID").isJsonNull()) {
+                res.status(400);
+                return gson.toJson(Map.of("message", "Error: bad request"));
+            }
+
+            int gameID = json.get("gameID").getAsInt();
+
+            if(!json.has("playerColor")) {
+                res.status(400);
+                return gson.toJson(Map.of("message", "Error: bad request"));
+            }
+            if(json.get("playerColor").isJsonNull()) {
                 res.status(400);
                 return gson.toJson(Map.of("message", "Error: bad request"));
             }
 
             String playerColor = json.get("playerColor").getAsString();
-            int gameID = json.get("gameID").getAsInt();
-
-            if(playerColor == null || playerColor.isBlank() || (!playerColor.equalsIgnoreCase("WHITE") && !playerColor.equalsIgnoreCase("BLACK"))) {
+            if (!playerColor.equalsIgnoreCase("WHITE") && !playerColor.equalsIgnoreCase("BLACK") && !playerColor.equalsIgnoreCase("OBSERVER")) {
                 res.status(400);
                 return gson.toJson(Map.of("message", "Error: bad request"));
             }
@@ -57,7 +66,11 @@ public class JoinHandler {
             } else {
                 res.status(500);
             }
-            return gson.toJson(Map.of("message", "Error: " + e.getMessage()));
+            String message = e.getMessage();
+            if(!message.startsWith("Error: ")) {
+                message = "Error: " + e.getMessage();
+            }
+            return gson.toJson(Map.of("message", message));
         } catch (Exception e) {
             res.status(500);
             return gson.toJson(Map.of("message", "Error: server error"));

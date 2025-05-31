@@ -31,7 +31,7 @@ public class ListHandler {
             Collection<GameData> games = gameService.listGames(authToken);
 
             res.status(200);
-            return gson.toJson(games);
+            return gson.toJson(Map.of("games", games));
 
         } catch (DataAccessException e) {
             if (e.getMessage().equals("Error: unauthorized")) {

@@ -49,7 +49,9 @@ public class GameService {
         String whitePlayer = game.whiteUsername();
         String blackPlayer = game.blackUsername();
 
-        if(playerColor.equalsIgnoreCase("WHITE")) {
+        if(playerColor == null) {
+            return;
+        }else if(playerColor.equalsIgnoreCase("WHITE")) {
             if(whitePlayer != null) {
                 throw new DataAccessException("Error: already taken");
             }
@@ -60,7 +62,7 @@ public class GameService {
             }
             blackPlayer = username;
         }else {
-            throw new DataAccessException("Error: Access Error");
+            throw new DataAccessException("Error: bad request");
         }
 
         GameData updatedData = new GameData(game.gameID(), whitePlayer, blackPlayer, game.gameName(), game.game());

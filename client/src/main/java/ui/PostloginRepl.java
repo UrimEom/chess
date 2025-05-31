@@ -68,7 +68,7 @@ public class PostloginRepl {
                         if(inputs.length != 2) {
                             System.out.println("USE: observe <ID>");
                         }else {
-                            doObserveGame(inputs[1]);
+                            //observe method needed
 
                             printBoard(null);
                         }
@@ -139,22 +139,6 @@ public class PostloginRepl {
             int gameID = gameLists.get(num).gameID();
             server.joinGame(gameID, teamColor, auth.authToken());
             System.out.println("Joined game: " + (num + 1) + " as " + teamColor);
-        }catch (Exception ex) {
-            System.out.println("Invalid process. Please try again.");
-        }
-    }
-
-    private void doObserveGame(String stringNum) {
-        try {
-            int num = Integer.parseInt(stringNum) - 1;
-            if(num < 0 || num >= gameLists.size()) {
-                System.out.println("Invalid game number");
-                return;
-            }
-
-            int gameID = gameLists.get(num).gameID();
-            server.observeGame(gameID, auth.authToken());
-            System.out.println("Observing game: " + (num + 1));
         }catch (Exception ex) {
             System.out.println("Invalid process. Please try again.");
         }

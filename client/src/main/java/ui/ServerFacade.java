@@ -1,6 +1,8 @@
 package ui;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import model.AuthData;
 import model.GameData;
 import model.UserData;
@@ -47,11 +49,13 @@ public class ServerFacade {
 
     //list game
     public List<GameData> listGames(String authToken) {
-        GameData[] games = makeRequest("GET", "/game", null, GameData[].class, authToken);
+        String response = makeRequest("GET", "/game", null, String.class, authToken);
 
-        if(games == null) {
-            return null;
-        }
+        JsonObject json = gson.fromJson(response, JsonObject.class);
+        JsonArray gameArray = json.getAsJsonArray("games");
+
+        GameData[] games = gson.fromJson(gameArray, GameData[].class);
+
         return Arrays.asList(games);
     }
 
@@ -59,14 +63,13 @@ public class ServerFacade {
     public void joinGame(int gameID, String playerColor, String authToken) {
         Map<String, Object> request = new HashMap<>();
         request.put("gameID", gameID);
-        request.put("playerColor", playerColor);
+        if(playerColor != null) {
+            request.put("playerColor", playerColor);
+        }
         makeRequest("PUT", "/game", request, Void.class, authToken);
     }
 
     //observe game
-    public void observeGame(int gameID, String authToken) {
-        joinGame(gameID, null, authToken);
-    }
 
     //print board
     public void clearServer() {
@@ -93,21 +96,23 @@ public class ServerFacade {
                 }
             }
 
-            if(http.getResponseCode() >= 400) {
-                try (InputStream error = http.getErrorStream()) {
-                    String errorMessage = new BufferedReader(new InputStreamReader(error)).readLine();
-                    throw new RuntimeException(errorMessage);
+            if (http.getResponseCode() == 200) {
+                try (InputStream body = http.getInputStream(); InputStreamReader reader = new InputStreamReader(body)) {
+                    if(responseClass == String.class) {
+                        return responseClass.cast(new BufferedReader(reader).readLine());
+                    }else if (responseClass == Void.class) {
+                        return null;
+                    }
+                    return gson.fromJson(reader, responseClass);
+                }
+            }else {
+                try (InputStream body = http.getErrorStream(); InputStreamReader reader = new InputStreamReader(body)) {
+                    throw new RuntimeException(new BufferedReader(reader).readLine());
                 }
             }
 
-            if(responseClass == null || responseClass == Void.class) return null;
-
-            try(InputStream input = http.getInputStream()) {
-                return new Gson().fromJson(new InputStreamReader(input), responseClass);
-            }
         }catch (IOException ex) {
             throw new RuntimeException("HTTP request was failed: " + ex.getMessage());
         }
     }
-
 }

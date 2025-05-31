@@ -60,7 +60,6 @@ public class RegisterHandler {
             }
             return gson.toJson(Map.of("message", "Error: " + e.getMessage()));
         } catch (Exception e) {
-            e.printStackTrace();
             res.status(500);
             return gson.toJson(Map.of("message", "Error: server error"));
         }
