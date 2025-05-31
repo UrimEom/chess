@@ -90,6 +90,28 @@ public class ServerFacadeTests {
         facade.createGame("game2", auth.authToken());
         List<GameData> games = facade.listGames(auth.authToken());
         assertNotNull(games);
-        assertTrue(games.size() >= 1);
+        assertFalse(games.isEmpty());
+    }
+
+    @Test
+    public void listGamesNegative() {
+        assertThrows(Exception.class, () -> facade.listGames("invalid token"));
+    }
+
+    @Test
+    public void joinGamePositive() {
+        AuthData auth = facade.register("tester7", "password7", "tester7@example.com");
+        GameData game = facade.createGame("game3", auth.authToken());
+        assertDoesNotThrow(() -> facade.joinGame(game.gameID(), "WHITE", auth.authToken()));
+    }
+
+    @Test
+    public void joinGameNegative() {
+        assertThrows(Exception.class, () -> facade.joinGame(350, "WHITE", "invalid"));
+    }
+
+    @Test
+    public void clearServerPositive() {
+        assertDoesNotThrow(() -> facade.clearServer());
     }
 }
