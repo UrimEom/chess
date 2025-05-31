@@ -45,34 +45,10 @@ public class PostloginRepl {
                     case "quit" -> {
                         return;
                     }
-                    case "create" -> {
-                        if (inputs.length != 2) {
-                            System.out.println("USE: create <NAME>");
-                        } else {
-                            doCreateGame(inputs[1]);
-                        }
-                    }
+                    case "create" -> handleCreate(inputs);
                     case "list" -> doListGames();
-                    case "join" -> {
-                        if(inputs.length != 3) {
-                            System.out.println("USE: join <ID> [WHITE|BLACK]");
-                        }else {
-                            doJoinGame(inputs[1], inputs[2]);
-
-                            String color = inputs[2].toUpperCase();
-                            ChessGame.TeamColor playerColor = color.equals("BLACK") ? ChessGame.TeamColor.BLACK : ChessGame.TeamColor.WHITE;
-                            printBoard(playerColor);
-                        }
-                    }
-                    case "observe" -> {
-                        if(inputs.length != 2) {
-                            System.out.println("USE: observe <ID>");
-                        }else {
-                            //observe method needed
-
-                            printBoard(null);
-                        }
-                    }
+                    case "join" -> handleJoin(inputs);
+                    case "observe" -> handleObserve(inputs);
                     default -> {
                         System.out.println("Invalid command: please try again");
                         printHelp();
@@ -82,6 +58,36 @@ public class PostloginRepl {
                 System.out.println("Error: " + ex.getMessage());
             }
         }
+    }
+
+    private void handleCreate(String[] inputs) {
+        if (inputs.length != 2) {
+            System.out.println("USE: create <NAME>");
+            return;
+        }
+        doCreateGame(inputs[1]);
+    }
+
+    private void handleJoin(String[] inputs) {
+        if(inputs.length != 3) {
+            System.out.println("USE: join <ID> [WHITE|BLACK]");
+            return;
+        }
+        doJoinGame(inputs[1], inputs[2]);
+
+        String color = inputs[2].toUpperCase();
+        ChessGame.TeamColor playerColor = color.equals("BLACK") ? ChessGame.TeamColor.BLACK : ChessGame.TeamColor.WHITE;
+        printBoard(playerColor);
+    }
+
+    private void handleObserve(String[] inputs) {
+        if(inputs.length != 2) {
+            System.out.println("USE: observe <ID>");
+            return;
+        }
+        //observe method needed
+
+        printBoard(null);
     }
 
     private void printHelp() {

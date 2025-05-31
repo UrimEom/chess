@@ -33,20 +33,8 @@ public class PreloginRepl {
                     case "quit" -> {
                         return;
                     }
-                    case "login" -> {
-                        if (inputs.length != 3) {
-                            System.out.println("USE: login <USERNAME> <PASSWORD>");
-                        } else {
-                            doLogin(inputs[1], inputs[2]);
-                        }
-                    }
-                    case "register" -> {
-                        if (inputs.length != 4) {
-                            System.out.println("USE: register <USERNAME> <PASSWORD> <EMAIL>");
-                        } else {
-                            doRegister(inputs[1], inputs[2], inputs[3]);
-                        }
-                    }
+                    case "login" -> handleLogin(inputs);
+                    case "register" -> handleRegister(inputs);
                     default -> {
                         System.out.println("Invalid command: please try again");
                         printHelp();
@@ -56,6 +44,22 @@ public class PreloginRepl {
                 System.out.println("Please try again.");
             }
         }
+    }
+
+    private void handleLogin(String[] inputs) {
+        if (inputs.length != 3) {
+            System.out.println("USE: login <USERNAME> <PASSWORD>");
+            return;
+        }
+        doLogin(inputs[1], inputs[2]);
+    }
+
+    private void handleRegister(String[] inputs) {
+        if (inputs.length != 4) {
+            System.out.println("USE: register <USERNAME> <PASSWORD> <EMAIL>");
+            return;
+        }
+        doRegister(inputs[1], inputs[2], inputs[3]);
     }
 
     private void printHelp() {
