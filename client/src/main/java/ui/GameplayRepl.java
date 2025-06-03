@@ -105,9 +105,9 @@ public class GameplayRepl {
     private void drawSquare(PrintStream out, ChessPiece piece, int row, int col) {
         //color square
         if((row + col) % 2 == 1) {
-            out.print(EscapeSequences.SET_BG_COLOR_BLACK);
-        }else {
             out.print(EscapeSequences.SET_BG_COLOR_WHITE);
+        }else {
+            out.print(EscapeSequences.SET_BG_COLOR_BLACK);
         }
 
         //color the piece

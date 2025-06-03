@@ -114,10 +114,12 @@ public class PostloginRepl {
             gameLists = server.listGames(auth.authToken());
             if (gameLists != null && !gameLists.isEmpty()) {
                 System.out.println("Existing games: ");
+                int index = 1;
                 for (GameData game : gameLists) {
                     String white = game.whiteUsername() != null ? game.whiteUsername() : "None";
                     String black = game.blackUsername() != null ? game.blackUsername() : "None";
-                    System.out.println(game.gameName() + " | " + white + " | " + black);
+                    System.out.println(index + ": " + game.gameName() + " | white user: " + white + " | black user: " + black);
+                    index++;
                 }
             } else {
                 //when there is no game
