@@ -26,7 +26,7 @@ public class GameplayRepl {
             out.print(EscapeSequences.SET_BG_COLOR_LIGHT_GREY);
             //draw headers
             out.print("   ");
-            printLabel(out);
+            drawBoardLabel(out);
 
             out.print("   ");
             out.print(EscapeSequences.RESET_TEXT_COLOR);
@@ -48,7 +48,7 @@ public class GameplayRepl {
 
             //draw footers
             out.print("   ");
-            printLabel(out);
+            drawBoardLabel(out);
 
             out.print("   ");
             out.print(EscapeSequences.RESET_TEXT_COLOR);
@@ -60,7 +60,7 @@ public class GameplayRepl {
         }
     }
 
-    private void printLabel(PrintStream out) {
+    private void drawBoardLabel(PrintStream out) {
         if (color == ChessGame.TeamColor.BLACK) {
             for (char c = 'h'; c >= 'a'; c--) {
                 out.printf(" %c ", c);
@@ -81,12 +81,12 @@ public class GameplayRepl {
         if(isBlack) {
             for(char col = 'h'; col >= 'a'; col--) {
                 ChessPosition pos = new ChessPosition(row, col - 'a' + 1);
-                drawSquare(out, board.getPiece(pos), row, col - 'a' + 1);
+                drawBoardSquare(out, board.getPiece(pos), row, col - 'a' + 1);
             }
         }else {
             for(char col = 'a'; col <= 'h'; col++) {
                 ChessPosition pos = new ChessPosition(row, col - 'a' + 1);
-                drawSquare(out, board.getPiece(pos), row, col - 'a' + 1);
+                drawBoardSquare(out, board.getPiece(pos), row, col - 'a' + 1);
             }
         }
         out.print(EscapeSequences.RESET_BG_COLOR);
@@ -102,7 +102,7 @@ public class GameplayRepl {
         out.println();
     }
 
-    private void drawSquare(PrintStream out, ChessPiece piece, int row, int col) {
+    private void drawBoardSquare(PrintStream out, ChessPiece piece, int row, int col) {
         //color square
         if((row + col) % 2 == 1) {
             out.print(EscapeSequences.SET_BG_COLOR_WHITE);
