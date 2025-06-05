@@ -1,22 +1,96 @@
 package ui;
 
-import chess.ChessBoard;
-import chess.ChessGame;
-import chess.ChessPiece;
-import chess.ChessPosition;
+import chess.*;
 
 import java.io.PrintStream;
+import java.util.Scanner;
 
 import static java.lang.System.out;
 
 public class GameplayRepl {
     private final ChessGame game;
     private final ChessGame.TeamColor color;
+    ServerFacade server;
+    private final Scanner scanner;
 
-    public GameplayRepl(ChessGame game, ChessGame.TeamColor color) {
+    public GameplayRepl(ServerFacade server, ChessGame game, ChessGame.TeamColor color) {
         this.game = game;
         this.color = color;
+        this.server = server;
+        this.scanner = new Scanner(System.in);
     }
+
+    public void run() {
+        while(true) {
+            String input = scanner.nextLine().trim();
+            String[] inputs = input.split(" ");
+
+            if(inputs.length == 0 || inputs[0].isEmpty()) { continue; }
+
+            String command = inputs[0].toLowerCase();
+
+            switch (command) {
+                case "help" -> printHelp();
+                case "redraw" -> drawBoard();
+                case "leave" -> {
+                    return;
+                }
+                case "make" -> {
+                    if(inputs.length >= 2 && inputs[1].equalsIgnoreCase("move")) {
+                        handleMakeMove();
+                    }else {
+                        out.println("USE: make move");
+                    }
+                }
+                case "resign" -> {
+                    handleResign();
+                    return;
+                }
+                default -> {
+                    out.println("Invalid command: please try again");
+                    printHelp();
+                }
+            }
+
+        }
+    }
+
+    private void printHelp() {
+        out.println("help -> to show possible commands");
+        out.println("redraw -> to redraw the chess board");
+        out.println("leave -> to leave the game");
+        out.println("make <FROM> <TO> <PROMOTION_PIECE> -> to make a move on the board");
+        out.println("resign -> to forfeit the game");
+        out.println("highlight -> to highlight legal moves");
+    }
+
+    private void handleMakeMove() {
+        out.println("Please enter the move you want (ex: b7 b6): ");
+        String answer = scanner.next().trim();
+        String[] elements = answer.split(" ");
+        if(elements.length != 2 && elements[0].matches("[a-h][1-8]") && elements[1].matches("[a-h][1-8]")) {
+            out.println("Please enter two squares (ex: b7 b6)");
+            return;
+        }
+
+        try {
+            ChessPosition from = new ChessPosition(elements[0].charAt(1) - '0', elements[0].charAt(0) - ('a'-1));
+            ChessPosition to = new ChessPosition(elements[1].charAt(1) - '0', elements[1].charAt(0) - ('a'-1));
+
+            ChessMove move = new ChessMove(from, to, null); //*add promotion piece later
+
+            try {
+                game.makeMove(move);
+                drawBoard();
+            }catch (InvalidMoveException ex) {
+                out.println("Invalid move: " + ex.getMessage());
+            }
+        }catch(IllegalArgumentException ex) {
+            out.println("Please provide proper square like b7 or b6.");
+        }
+
+    }
+
 
     public void drawBoard() {
         try {
