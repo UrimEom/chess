@@ -1,13 +1,14 @@
 package server;
 
 import dataaccess.*;
-import org.eclipse.jetty.server.Authentication;
+import service.GameService;
 import service.UserService;
 import spark.*;
 
-import java.util.List;
 
 public class Server {
+    public static UserService userService;
+    public static GameService gameService;
 
     public int run(int desiredPort) {
         Spark.port(desiredPort);
