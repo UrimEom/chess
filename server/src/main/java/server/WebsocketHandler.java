@@ -214,8 +214,69 @@ public class WebsocketHandler {
         }
     }
 
-    private void handleResign(Session session, ResignCommand command) {}
-    private void handleLeave(Session session, LeaveCommand command) {}
+    private void handleResign(Session session, ResignCommand command) {
+        String authToken = command.getAuthToken();
+        int gameID = command.getGameID();
+
+        AuthData auth;
+        try {
+            auth = Server.userService.getAuth(authToken);
+        }catch (DataAccessException ex) {
+            sendError(session, new ErrorMessage("Error: Unauthorized"));
+            return;
+        }
+
+        GameData game;
+        try {
+            game = Server.gameService.getGameData(authToken, gameID);
+        }catch (DataAccessException ex) {
+            sendError(session, new ErrorMessage("Error: Invalid game"));
+            return;
+        }
+
+        ChessGame.TeamColor userColor = getTeamColor(auth.username(), game);
+        if(userColor == null) {
+            sendError(session, new ErrorMessage("Error: Observing game"));
+            return;
+        }
+
+        if(game.game().getGameOver()) {
+            sendError(session, new ErrorMessage("Error: Game is over"));
+            return;
+        }
+
+        game.game().setGameOver(true);
+        try {
+            Server.gameService.updateGame(authToken, game);
+        }catch (DataAccessException ex) {
+            //ignore
+        }
+        String enemy = userColor == ChessGame.TeamColor.WHITE
+                ? game.blackUsername() : game.whiteUsername();
+        NotificationMessage notification = new NotificationMessage(String.format("%s has forfeited, %s wins!", auth.username(), enemy));
+        broadcastMessage(gameID, notification);
+
+        session.close();
+    }
+
+    private void handleLeave(Session session, LeaveCommand command) {
+        String authToken = command.getAuthToken();
+        int gameID = command.getGameID();
+
+        AuthData auth;
+        try {
+            auth = Server.userService.getAuth(authToken);
+        }catch (DataAccessException ex) {
+            sendError(session, new ErrorMessage("Error: Unauthorized"));
+            return;
+        }
+
+        NotificationMessage leaveNotif = new NotificationMessage(
+                String.format("%s left the game", auth.username()));
+        broadcastMessage(gameID, leaveNotif);
+
+        session.close();
+    }
 
     private void sendMessage(Session session, ServerMessage message) {
         try {
