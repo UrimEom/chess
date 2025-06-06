@@ -79,4 +79,12 @@ public class GameService {
         return gameDAO.listGames();
     }
 
+    public GameData getGameData(String authToken, int gameID) throws DataAccessException {
+        AuthData auth = authDAO.getAuth(authToken);
+        if(auth == null) {
+            throw new DataAccessException("Error: unauthorized");
+        }
+
+        return gameDAO.getGame(gameID);
+    }
 }
