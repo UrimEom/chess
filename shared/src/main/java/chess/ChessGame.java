@@ -15,6 +15,8 @@ public class ChessGame {
     private ChessGame.TeamColor team = TeamColor.WHITE;
     private ChessBoard board = new ChessBoard();
 
+    private boolean gameOver;
+
     private boolean isWhiteKingMoved = false;
     private boolean isBlackKingMoved = false;
     private boolean isWhiteRookLeftMoved = false;
@@ -483,6 +485,14 @@ public class ChessGame {
      */
     public ChessBoard getBoard() {
         return board;
+    }
+
+    public void setGameOver(boolean gameOver) {
+        this.gameOver = gameOver;
+    }
+
+    public boolean getGameOver() {
+        return gameOver;
     }
     @Override
     public boolean equals(Object o) {
