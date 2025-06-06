@@ -1,6 +1,7 @@
 package ui;
 
 import chess.*;
+import model.GameData;
 
 import java.io.PrintStream;
 import java.util.Scanner;
@@ -12,12 +13,14 @@ public class GameplayRepl {
     private final ChessGame.TeamColor color;
     ServerFacade server;
     private final Scanner scanner;
+    int gameID;
 
-    public GameplayRepl(ServerFacade server, ChessGame game, ChessGame.TeamColor color) {
+    public GameplayRepl(ServerFacade server, GameData gameData, ChessGame game, ChessGame.TeamColor color) {
         this.game = game;
         this.color = color;
         this.server = server;
         this.scanner = new Scanner(System.in);
+        this.gameID = gameData.gameID();
     }
 
     public void run() {
@@ -33,6 +36,7 @@ public class GameplayRepl {
                 case "help" -> printHelp();
                 case "redraw" -> drawBoard();
                 case "leave" -> {
+                    server.leaveGame(gameID); //Change needed
                     return;
                 }
                 case "make" -> {
@@ -43,8 +47,14 @@ public class GameplayRepl {
                     }
                 }
                 case "resign" -> {
-                    handleResign();
+                    server.resignGame(gameID); //change needed
                     return;
+                }
+                case "highlight" -> {
+                    if(inputs.length == 2 && inputs[1].matches("[a-h][1-8]")) {
+                        ChessPosition position = new ChessPosition(inputs[1].charAt(1) - '0', inputs[1].charAt(0) - ('a'-1));
+                        //draw board with highlighted position add the logic!!!
+                    }
                 }
                 default -> {
                     out.println("Invalid command: please try again");
@@ -61,7 +71,7 @@ public class GameplayRepl {
         out.println("leave -> to leave the game");
         out.println("make <FROM> <TO> <PROMOTION_PIECE> -> to make a move on the board");
         out.println("resign -> to forfeit the game");
-        out.println("highlight -> to highlight legal moves");
+        out.println("highlight <coordinate> -> to highlight legal moves");
     }
 
     private void handleMakeMove() {
@@ -90,7 +100,6 @@ public class GameplayRepl {
         }
 
     }
-
 
     public void drawBoard() {
         try {
