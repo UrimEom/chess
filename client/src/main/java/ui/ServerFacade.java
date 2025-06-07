@@ -2,34 +2,31 @@ package ui;
 
 import chess.ChessGame;
 import chess.ChessMove;
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import model.AuthData;
 import model.GameData;
-import model.UserData;
+
 import websocket.commands.*;
+import websocket.messages.ServerMessage;
 
-import javax.websocket.Session;
-import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-public class ServerFacade {
+
+public class ServerFacade implements ServerMessageObserver {
     private final String serverUrl;
-    private final Gson gson = new Gson();
     private final HttpCommunicator http;
     private WebsocketCommunicator ws;
+    private ServerMessageObserver observer;
     private String authToken;
+    private int gameID;
 
     public ServerFacade(String serverUrl) {
         this.serverUrl = serverUrl;
         http = new HttpCommunicator(this, serverUrl);
+        this.observer = null;
+    }
+
+    public void setObserver(ServerMessageObserver observer) {
+        this.observer = observer;
     }
 
     //register
@@ -60,6 +57,7 @@ public class ServerFacade {
     //join game
     public void joinGame(int gameID, String playerColor, String authToken) {
         http.joinGame(gameID, playerColor, authToken);
+        this.gameID = gameID;
     }
 
     //join player
@@ -96,8 +94,44 @@ public class ServerFacade {
 //        makeRequest("DELETE", "/db", null, Void.class, null);
 //    }
 
+    public String getAuthToken() {
+        return this.authToken;
+    }
+
     protected void setAuthToken(String authToken) {
         this.authToken = authToken;
         //maybe add exception?
+    }
+
+    public void setGameID(int gameID) {
+        this.gameID = gameID;
+    }
+
+    public void connectWS() {
+        try {
+            ws = new WebsocketCommunicator(this);
+            String base;
+            if(serverUrl.startsWith("https://")) {
+                base = "wss://" + serverUrl.substring("https://".length());
+            }else {
+                base = "ws://" + serverUrl.substring("http://".length());
+            }
+            base = base.replaceAll("/+$", "");
+            String wsUrl = base + "/ws";
+            ws.connect(wsUrl);
+
+            ws.sendCommand(new ConnectCommand(authToken, this.gameID));
+        }catch (Exception e) {
+            System.out.println("Failed to make connection: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public void notify(ServerMessage message) {
+        if(observer != null) {
+            observer.notify(message);
+        }else {
+            System.out.println("WS message: " + message);
+        }
     }
 }
