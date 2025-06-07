@@ -4,23 +4,41 @@ import chess.*;
 import model.GameData;
 
 import java.io.PrintStream;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Scanner;
+import java.util.Set;
 
 import static java.lang.System.out;
 
 public class GameplayRepl {
     private final ChessGame game;
     private final ChessGame.TeamColor color;
-    ServerFacade server;
-    private final Scanner scanner;
-    int gameID;
+    private final ServerFacade server;
+    private final Scanner scanner = new Scanner(System.in);
+    private final int gameID;
+
+    private final boolean isObserver;
+    private boolean myTurn;
+    private final Set<ChessPosition> highlighted = new HashSet<>();
+    private ChessPosition selectedPos;
 
     public GameplayRepl(ServerFacade server, GameData gameData, ChessGame game, ChessGame.TeamColor color) {
         this.game = game;
         this.color = color;
         this.server = server;
-        this.scanner = new Scanner(System.in);
         this.gameID = gameData.gameID();
+        this.isObserver = false;
+        this.myTurn = (color == ChessGame.TeamColor.WHITE);
+    }
+
+    public GameplayRepl(ServerFacade server, GameData gameData, ChessGame game) {
+        this.game = game;
+        this.color = null;
+        this.server = server;
+        this.gameID = gameData.gameID();
+        this.isObserver = true;
+        this.myTurn = false;
     }
 
     public void run() {
@@ -36,14 +54,18 @@ public class GameplayRepl {
                 case "help" -> printHelp();
                 case "redraw" -> drawBoard();
                 case "leave" -> {
-                    server.leaveGame(gameID); //Change needed
+                    server.leaveGame(gameID);
                     return;
                 }
-                case "make" -> {
-                    if(inputs.length >= 2 && inputs[1].equalsIgnoreCase("move")) {
-                        handleMakeMove();
+                case "move" -> {
+                    if(isObserver) {
+                        out.println("Observing: cannot move");
+                    }else if(!myTurn) {
+                        out.println("Not your turn");
+                    }if(inputs.length >= 3) {
+                        handleMakeMove(inputs);
                     }else {
-                        out.println("USE: make move");
+                        out.println("USE: move <FROM> <TO> <PROMOTION_PIECE>");
                     }
                 }
                 case "resign" -> {
@@ -51,9 +73,13 @@ public class GameplayRepl {
                     return;
                 }
                 case "highlight" -> {
-                    if(inputs.length == 2 && inputs[1].matches("[a-h][1-8]")) {
-                        ChessPosition position = new ChessPosition(inputs[1].charAt(1) - '0', inputs[1].charAt(0) - ('a'-1));
-                        //draw board with highlighted position add the logic!!!
+                    if(isObserver) {
+                        out.println("Observing: cannot highlight moves");
+                    }else if(inputs.length == 2 && inputs[1].matches("[a-h][1-8]")) {
+                        handleHighlight(inputs);
+                    }else {
+                        out.println("USE: highlight <square> (ex: highlight b6)");
+                        return;
                     }
                 }
                 default -> {
@@ -69,35 +95,95 @@ public class GameplayRepl {
         out.println("help -> to show possible commands");
         out.println("redraw -> to redraw the chess board");
         out.println("leave -> to leave the game");
-        out.println("make <FROM> <TO> <PROMOTION_PIECE> -> to make a move on the board");
+        out.println("move <FROM> <TO> <PROMOTION_PIECE> -> to make a move on the board");
         out.println("resign -> to forfeit the game");
-        out.println("highlight <coordinate> -> to highlight legal moves");
+        out.println("highlight <square> -> to highlight legal moves");
     }
 
-    private void handleMakeMove() {
-        out.println("Please enter the move you want (ex: b7 b6): ");
-        String answer = scanner.next().trim();
-        String[] elements = answer.split(" ");
-        if(elements.length != 2 && elements[0].matches("[a-h][1-8]") && elements[1].matches("[a-h][1-8]")) {
-            out.println("Please enter two squares (ex: b7 b6)");
+    private void handleMakeMove(String[] elements) {
+        ChessPosition from;
+        ChessPosition to;
+        try {
+            from = parseSquare(elements[1]);
+            to = parseSquare(elements[2]);
+        }catch (IllegalArgumentException ex) {
+            out.println("Invalid square. Square should be a1-h8.");
             return;
         }
 
-        try {
-            ChessPosition from = new ChessPosition(elements[0].charAt(1) - '0', elements[0].charAt(0) - ('a'-1));
-            ChessPosition to = new ChessPosition(elements[1].charAt(1) - '0', elements[1].charAt(0) - ('a'-1));
-
-            ChessMove move = new ChessMove(from, to, null); //*add promotion piece later
-
-            try {
-                game.makeMove(move);
-                drawBoard();
-            }catch (InvalidMoveException ex) {
-                out.println("Invalid move: " + ex.getMessage());
+        ChessPiece piece = game.getBoard().getPiece(from);
+        boolean isPromotion = piece.getPieceType() == ChessPiece.PieceType.PAWN
+                && ((color == ChessGame.TeamColor.WHITE && to.getRow() == 8)
+                || (color == ChessGame.TeamColor.BLACK && to.getRow() == 1));
+        ChessMove move;
+        if(isPromotion) {
+            ChessPiece.PieceType promotionPiece = null;
+            String option = elements.length == 4 ? elements[3].toUpperCase() : null;
+            while (promotionPiece == null) {
+                if(option != null) {
+                    switch (option) {
+                        case "QUEEN" -> promotionPiece = ChessPiece.PieceType.QUEEN;
+                        case "BISHOP" -> promotionPiece = ChessPiece.PieceType.BISHOP;
+                        case "ROOK" -> promotionPiece = ChessPiece.PieceType.ROOK;
+                        case "KNIGHT" -> promotionPiece = ChessPiece.PieceType.KNIGHT;
+                        default -> option = null;
+                    }
+                }
+                if (promotionPiece == null) {
+                    out.println("Choose piece for the promotion.");
+                    option = scanner.nextLine().trim().toUpperCase();
+                }
             }
-        }catch(IllegalArgumentException ex) {
-            out.println("Please provide proper square like b7 or b6.");
+            move = new ChessMove(from, to, promotionPiece);
+        }else {
+            move = new ChessMove(from, to, null);
         }
+        highlighted.clear();
+        server.makeMove(gameID, move);
+        myTurn = false;
+
+    }
+
+    private void handleHighlight(String[] elements) {
+        String square = elements[1];
+        ChessPosition position;
+        try {
+            position = parseSquare(square);
+        }catch (IllegalArgumentException ex) {
+            out.println("Invalid square. Please enter square like b2");
+            return;
+        }
+
+        ChessPiece piece = game.getBoard().getPiece(position);
+        if(piece == null) {
+            out.println("There is no piece");
+            highlighted.clear();
+            drawBoard();
+            return;
+        }
+        if(piece.getTeamColor() != color) {
+            out.println("Not your piece.");
+            highlighted.clear();
+            drawBoard();
+            return;
+        }
+
+        Collection<ChessMove> moves = game.validMoves(position);
+        if(moves == null || moves.isEmpty()) {
+            out.println("There is no legal moves for the piece at " + square);
+            highlighted.clear();
+            drawBoard();
+            return;
+        }
+
+        selectedPos = position;
+        highlighted.clear();
+        for(ChessMove m : moves) {
+            highlighted.add(m.getEndPosition());
+        }
+
+        drawBoard();
+        out.println("Highlighted legal moves for " + square);
 
     }
 
@@ -186,6 +272,15 @@ public class GameplayRepl {
     }
 
     private void drawBoardSquare(PrintStream out, ChessPiece piece, int row, int col) {
+        ChessPosition position = new ChessPosition(row, col);
+
+        //highlight legal moves
+        if(position.equals(selectedPos)) {
+            out.print(EscapeSequences.SET_BG_COLOR_YELLOW);
+        }else if(highlighted.contains(position)) {
+            out.print(EscapeSequences.SET_BG_COLOR_GREEN);
+        }
+
         //color square
         if((row + col) % 2 == 1) {
             out.print(EscapeSequences.SET_BG_COLOR_WHITE);
@@ -214,5 +309,21 @@ public class GameplayRepl {
             out.print(symbol);
             out.print(EscapeSequences.RESET_TEXT_COLOR);
         }
+    }
+
+    private ChessPosition parseSquare(String str) {
+        if(str == null || str.length() != 2) {
+            throw new IllegalArgumentException("Square must be 2 characters");
+        }
+        char alphabet = str.charAt(0);
+        char number = str.charAt(1);
+
+        int col = alphabet - 'a' + 1;
+        int row = number - '1' + 1;
+
+        if(col < 1 || col > 8 || row < 1 || row > 8) {
+            throw new IllegalArgumentException("Square is out of range: " + str);
+        }
+        return new ChessPosition(row, col);
     }
 }
