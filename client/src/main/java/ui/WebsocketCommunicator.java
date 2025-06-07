@@ -19,7 +19,7 @@ public class WebsocketCommunicator {
     private Session session;
     private final Gson gson = new Gson();
 
-    public WebsocketCommunicator(ServerMessageObserver observer, UserGameCommand command) throws Exception {
+    public WebsocketCommunicator(ServerMessageObserver observer, UserGameCommand command) {
         this.observer = observer;
         this.command = command;
     }
