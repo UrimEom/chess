@@ -27,6 +27,8 @@ public class Server {
 
             UserService userService = new UserService(userDAO, authDAO);
 
+            Spark.webSocket("/ws", WebsocketHandler.class);
+
             // Register your endpoints and handle exceptions here.
             Spark.post("/user", new RegisterHandler(userDAO, authDAO)::handler);
             Spark.post("/session", new LoginHandler(userDAO, authDAO)::handler);
@@ -35,6 +37,7 @@ public class Server {
             Spark.post("/game", new CreateHandler(gameDAO, authDAO)::handler);
             Spark.put("/game", new JoinHandler(gameDAO, authDAO)::handler);
             Spark.delete("/db", new ClearHandler(userDAO, authDAO, gameDAO)::handler);
+
         }catch (Exception e) {
             throw new RuntimeException("Server setup failed", e);
         }
