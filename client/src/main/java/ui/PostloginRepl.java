@@ -73,11 +73,21 @@ public class PostloginRepl {
             System.out.println("USE: join <ID> [WHITE|BLACK]");
             return;
         }
-        doJoinGame(inputs[1], inputs[2]);
 
+        int index = Integer.parseInt(inputs[1]) - 1;
+        if(index < 0 || index >= gameLists.size()) {
+            System.out.println("Invalid game number");
+            return;
+        }
+
+        GameData gameData = gameLists.get(index);
         String color = inputs[2].toUpperCase();
         ChessGame.TeamColor playerColor = color.equals("BLACK") ? ChessGame.TeamColor.BLACK : ChessGame.TeamColor.WHITE;
-        printBoard(playerColor);
+
+        server.joinGame(gameData.gameID(), color, auth.authToken());
+        System.out.printf("Joined game %d as %s%n", index+1, color);
+
+        printBoard(gameData, playerColor);
     }
 
     private void handleObserve(String[] inputs) {
@@ -85,9 +95,19 @@ public class PostloginRepl {
             System.out.println("USE: observe <ID>");
             return;
         }
-        //observe method needed
 
-        printBoard(null);
+        int index = Integer.parseInt(inputs[1]) - 1;
+        if(index < 0 || index >= gameLists.size()) {
+            System.out.println("Invalid game number");
+            return;
+        }
+
+        GameData gameData = gameLists.get(index);
+
+        server.joinObserver(gameData.gameID());
+        System.out.printf("Observing game %d%n", index+1);
+
+        printBoard(gameData);
     }
 
     private void printHelp() {
@@ -152,9 +172,16 @@ public class PostloginRepl {
         }
     }
 
-    private void printBoard(ChessGame.TeamColor color) {
+    private void printBoard(GameData gameData, ChessGame.TeamColor color) {
         ChessGame game = new ChessGame();
-        GameplayRepl gameUI = new GameplayRepl(game, color);
-        gameUI.drawBoard();
+        GameplayRepl gameUI = new GameplayRepl(server, gameData, game, color);
+        gameUI.run();
     }
+
+    private void printBoard(GameData gameData) {
+        ChessGame game = new ChessGame();
+        GameplayRepl gameUI = new GameplayRepl(server, gameData, game);
+        gameUI.run();
+    }
+
 }
