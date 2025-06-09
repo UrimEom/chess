@@ -31,12 +31,16 @@ public class ServerFacade implements ServerMessageObserver {
 
     //register
     public AuthData register(String username, String password, String email) {
-        return http.register(username, password, email);
+        AuthData auth = http.register(username, password, email);
+        setAuthToken(auth.authToken());
+        return auth;
     }
 
     //login
     public AuthData login(String username, String password) {
-        return http.login(username, password);
+        AuthData auth = http.login(username, password);
+        setAuthToken(auth.authToken());
+        return auth;
     }
 
     //logout
@@ -57,7 +61,9 @@ public class ServerFacade implements ServerMessageObserver {
     //join game
     public void joinGame(int gameID, String playerColor, String authToken) {
         http.joinGame(gameID, playerColor, authToken);
+        setAuthToken(authToken);
         this.gameID = gameID;
+        connectWS();
     }
 
     //make move
