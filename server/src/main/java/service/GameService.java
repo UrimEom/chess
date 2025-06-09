@@ -52,12 +52,12 @@ public class GameService {
         if(playerColor == null) {
             return;
         }else if(playerColor.equalsIgnoreCase("WHITE")) {
-            if(whitePlayer != null) {
+            if(whitePlayer != null && whitePlayer.equals(username)) {
                 throw new DataAccessException("Error: already taken");
             }
             whitePlayer = username;
         }else if(playerColor.equalsIgnoreCase("BLACK")) {
-            if(blackPlayer != null) {
+            if(blackPlayer != null && !blackPlayer.equals(username)) {
                 throw new DataAccessException("Error: already taken");
             }
             blackPlayer = username;
