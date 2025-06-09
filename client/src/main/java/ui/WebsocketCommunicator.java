@@ -13,15 +13,14 @@ import javax.websocket.*;
 import java.io.IOException;
 import java.net.URI;
 
+@ClientEndpoint
 public class WebsocketCommunicator {
     private final ServerMessageObserver observer;
-    private final UserGameCommand command;
     private Session session;
     private final Gson gson = new Gson();
 
-    public WebsocketCommunicator(ServerMessageObserver observer, UserGameCommand command) {
+    public WebsocketCommunicator(ServerMessageObserver observer) {
         this.observer = observer;
-        this.command = command;
     }
 
     public void connect(String wsUrl) throws DeploymentException, IOException {
@@ -32,44 +31,46 @@ public class WebsocketCommunicator {
     @OnOpen
     public void onOpen(Session session) {
         this.session = session;
-        sendCommand(command);
     }
 
     @OnMessage
     public void onMessage(String message) {
-        try {
-            JsonObject jsonObj = JsonParser.parseString(message).getAsJsonObject();
-            String typeStr = jsonObj.get("serverMessageType").getAsString();
-            ServerMessage.ServerMessageType type = ServerMessage.ServerMessageType.valueOf(typeStr);
+        JsonObject jsonObj = JsonParser.parseString(message).getAsJsonObject();
+        String typeStr = jsonObj.get("serverMessageType").getAsString();
+        ServerMessage.ServerMessageType type = ServerMessage.ServerMessageType.valueOf(typeStr);
 
-            switch (type) {
-                case LOAD_GAME -> {
-                    LoadMessage loadMessage = gson.fromJson(message, LoadMessage.class);
-                    observer.notify(loadMessage);
-                }
-                case ERROR -> {
-                    ErrorMessage errorMessage = gson.fromJson(message, ErrorMessage.class);
-                    observer.notify(errorMessage);
-                }
-                case NOTIFICATION -> {
-                    NotificationMessage notificationMessage = gson.fromJson(message, NotificationMessage.class);
-                    observer.notify(notificationMessage);
-                }
+        switch (type) {
+            case LOAD_GAME -> {
+                LoadMessage loadMessage = gson.fromJson(message, LoadMessage.class);
+                observer.notify(loadMessage);
             }
-
-        }catch (Exception ex) {
-            ErrorMessage failure = new ErrorMessage(ex.getMessage());
-            observer.notify(failure);
-        }
+            case ERROR -> {
+                ErrorMessage errorMessage = gson.fromJson(message, ErrorMessage.class);
+                observer.notify(errorMessage);
+            }
+            case NOTIFICATION -> {
+                NotificationMessage notificationMessage = gson.fromJson(message, NotificationMessage.class);
+                observer.notify(notificationMessage);
+            }
+            default -> new ErrorMessage("Unknown server message type: " + type);
+            }
     }
 
-    //might need onClose() onError() close()
+    @OnClose
+    public void onClose(Session session, CloseReason reason) {
+        System.out.println("WebSocket closed: " + reason.getReasonPhrase());
+    }
 
-    public void sendCommand(UserGameCommand cmd) {
+    @OnError
+    public void onError(Session session, Throwable throwable) {
+        System.err.println("WebSocket error: " + throwable.getMessage());
+    }
+
+    public void sendCommand(UserGameCommand command) {
         if(session == null || !session.isOpen()) {
-            throw new IllegalStateException("Unable to send command");
+            throw new IllegalStateException("Websocket was not opened");
         }
-        String json = gson.toJson(cmd);
+        String json = gson.toJson(command);
         session.getAsyncRemote().sendText(json);
     }
 }
