@@ -83,7 +83,6 @@ public class HttpCommunicator {
         makeRequest("PUT", "/game", request, Void.class, authToken);
     }
 
-    //print board
     public void clearServer() {
         makeRequest("DELETE", "/db", null, Void.class, null);
     }
