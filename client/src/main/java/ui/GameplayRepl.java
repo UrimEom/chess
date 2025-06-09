@@ -2,6 +2,7 @@ package ui;
 
 import chess.*;
 import model.GameData;
+import websocket.messages.ServerMessage;
 
 import java.io.PrintStream;
 import java.util.Collection;
@@ -11,38 +12,43 @@ import java.util.Set;
 
 import static java.lang.System.out;
 
-public class GameplayRepl {
+public class GameplayRepl implements ServerMessageObserver {
+    private final ServerFacade server;
+    private final GameData gameData;
     private final ChessGame game;
     private final ChessGame.TeamColor color;
-    private final ServerFacade server;
     private final Scanner scanner = new Scanner(System.in);
-    private final int gameID;
 
-    private final boolean isObserver;
-    private boolean myTurn;
     private final Set<ChessPosition> highlighted = new HashSet<>();
-    private ChessPosition selectedPos;
+    private ChessPosition selectedPos = null;
 
     public GameplayRepl(ServerFacade server, GameData gameData, ChessGame game, ChessGame.TeamColor color) {
+        this.server = server;
+        this.gameData = gameData;
         this.game = game;
         this.color = color;
-        this.server = server;
-        this.gameID = gameData.gameID();
-        this.isObserver = false;
-        this.myTurn = (color == ChessGame.TeamColor.WHITE);
+
+        server.setGameID(gameData.gameID());
+        server.setObserver(this);
+        server.connectWS();
+
+        if(this.color != null) {
+            server.joinGame(gameData.gameID(), color.name().toLowerCase(), server.getAuthToken());
+        }
     }
 
     public GameplayRepl(ServerFacade server, GameData gameData, ChessGame game) {
-        this.game = game;
-        this.color = null;
-        this.server = server;
-        this.gameID = gameData.gameID();
-        this.isObserver = true;
-        this.myTurn = false;
+       this.server = server;
+       this.gameData = gameData;
+       this.game = game;
+       this.color = null;
     }
 
     public void run() {
+        System.out.println(" ");
+        drawBoard();
         while(true) {
+            System.out.print("\n[GAME PLAY] >>> ");
             String input = scanner.nextLine().trim();
             String[] inputs = input.split(" ");
 
@@ -52,30 +58,28 @@ public class GameplayRepl {
 
             switch (command) {
                 case "help" -> printHelp();
-                case "redraw" -> drawBoard();
+                case "redraw" -> {
+                    selectedPos = null;
+                    highlighted.clear();
+                    drawBoard();
+                }
                 case "leave" -> {
-                    server.leaveGame(gameID);
+                    server.leaveGame(gameData.gameID());
                     return;
                 }
                 case "move" -> {
-                    if(isObserver) {
-                        out.println("Observing: cannot move");
-                    }else if(!myTurn) {
-                        out.println("Not your turn");
-                    }if(inputs.length >= 3) {
+                    if(inputs.length >= 3) {
                         handleMakeMove(inputs);
                     }else {
                         out.println("USE: move <FROM> <TO> <PROMOTION_PIECE>");
                     }
                 }
                 case "resign" -> {
-                    server.resignGame(gameID); //change needed
+                    server.resignGame(gameData.gameID());
                     return;
                 }
                 case "highlight" -> {
-                    if(isObserver) {
-                        out.println("Observing: cannot highlight moves");
-                    }else if(inputs.length == 2 && inputs[1].matches("[a-h][1-8]")) {
+                    if(inputs.length == 2 && inputs[1].matches("[a-h][1-8]")) {
                         handleHighlight(inputs);
                     }else {
                         out.println("USE: highlight <square> (ex: highlight b6)");
@@ -139,9 +143,8 @@ public class GameplayRepl {
             move = new ChessMove(from, to, null);
         }
         highlighted.clear();
-        server.makeMove(gameID, move);
-        myTurn = false;
-
+        drawBoard();
+        server.makeMove(gameData.gameID(), move);
     }
 
     private void handleHighlight(String[] elements) {
@@ -185,6 +188,11 @@ public class GameplayRepl {
         drawBoard();
         out.println("Highlighted legal moves for " + square);
 
+    }
+
+    @Override
+    public void notify(ServerMessage message) {
+        out.println("Server: " + message);
     }
 
     public void drawBoard() {
