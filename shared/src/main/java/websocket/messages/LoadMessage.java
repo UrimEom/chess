@@ -18,4 +18,9 @@ public class LoadMessage extends ServerMessage {
     public void setGame(GameData game) {
         this.game = game;
     }
+
+    @Override
+    public String toString() {
+        return String.format("Game - White: %s, Black: %s", game.whiteUsername(), game.blackUsername());
+    }
 }
