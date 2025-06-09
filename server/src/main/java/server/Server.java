@@ -7,8 +7,8 @@ import spark.*;
 
 
 public class Server {
-    public static UserService userService;
-    public static GameService gameService;
+    public static final UserService userService = new UserService(new MySqlUserDAO(), new MySqlAuthDAO());
+    public static final GameService gameService = new GameService(new MySqlGameDAO(), new MySqlAuthDAO());
 
     public int run(int desiredPort) {
         Spark.port(desiredPort);
@@ -24,8 +24,6 @@ public class Server {
             userDAO.createTable();
             authDAO.createTable();
             gameDAO.createTable();
-
-            UserService userService = new UserService(userDAO, authDAO);
 
             Spark.webSocket("/ws", WebsocketHandler.class);
 
