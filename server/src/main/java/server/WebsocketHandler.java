@@ -20,7 +20,6 @@ import websocket.messages.LoadMessage;
 import websocket.messages.NotificationMessage;
 import websocket.messages.ServerMessage;
 
-import javax.management.Notification;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -103,7 +102,7 @@ public class WebsocketHandler {
         String player = username.equals(gameData.whiteUsername())
                 ? "white player" : username.equals(gameData.blackUsername())
                 ? "black player" :"observer";
-        NotificationMessage notification = new NotificationMessage(username + "connected as" + player);
+        NotificationMessage notification = new NotificationMessage(username + " connected as " + player);
         for(Session other : existing) {
             send(other, notification);
         }
@@ -151,31 +150,31 @@ public class WebsocketHandler {
 
         ChessGame.TeamColor userColor = getTeamColor(auth.username(), gameData);
         if (userColor == null) {
-            sendError(session, new ErrorMessage("Error: Observing game"));
+            sendError(session, new ErrorMessage("Observing game"));
             return;
         }
 
         if (game.getGameOver()) {
-            sendError(session, new ErrorMessage("Error: Game is over"));
+            sendError(session, new ErrorMessage("Game is over"));
             return;
         }
 
         if (!game.getTeamTurn().equals(userColor)) {
-            sendError(session, new ErrorMessage("Error: Not your turn"));
+            sendError(session, new ErrorMessage("Not your turn"));
             return;
         }
 
         try {
             game.makeMove(command.getMove());
         } catch (InvalidMoveException ex) {
-            sendError(session, new ErrorMessage("Error: Invalid move"));
+            sendError(session, new ErrorMessage("Invalid move"));
             return;
         }
 
         try {
             Server.gameService.updateGame(authToken, gameData);
         } catch (DataAccessException ex) {
-            sendError(session, new ErrorMessage("Error: Unable to persist game"));
+            sendError(session, new ErrorMessage("Unable to persist game"));
             return;
         }
 
@@ -226,12 +225,12 @@ public class WebsocketHandler {
 
         ChessGame.TeamColor userColor = getTeamColor(auth.username(), gameData);
         if(userColor == null) {
-            sendError(session, new ErrorMessage("Error: Observing game"));
+            sendError(session, new ErrorMessage("Observing game"));
             return;
         }
 
         if(gameData.game().getGameOver()) {
-            sendError(session, new ErrorMessage("Error: Game is over"));
+            sendError(session, new ErrorMessage("Game is over"));
             return;
         }
 
