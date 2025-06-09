@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
+import static chess.ChessGame.*;
 import static java.lang.System.out;
 
 public class PostloginRepl {
@@ -26,7 +27,7 @@ public class PostloginRepl {
 
         boolean running = true;
         while(running) {
-            System.out.println("\n[LOGGED_IN] >>> ");
+            System.out.print("\n[LOGGED_IN] >>> ");
             String input = scanner.nextLine().trim();
             String[] inputs = input.split(" ");
 
@@ -74,20 +75,7 @@ public class PostloginRepl {
             return;
         }
 
-        int index = Integer.parseInt(inputs[1]) - 1;
-        if(index < 0 || index >= gameLists.size()) {
-            System.out.println("Invalid game number");
-            return;
-        }
-
-        GameData gameData = gameLists.get(index);
-        String color = inputs[2].toUpperCase();
-        ChessGame.TeamColor playerColor = color.equals("BLACK") ? ChessGame.TeamColor.BLACK : ChessGame.TeamColor.WHITE;
-
-        server.joinGame(gameData.gameID(), color, auth.authToken());
-        System.out.printf("Joined game %d as %s%n", index+1, color);
-
-        printBoard(gameData, playerColor);
+        doJoinGame(inputs[1], inputs[2]);
     }
 
     private void handleObserve(String[] inputs) {
@@ -104,10 +92,11 @@ public class PostloginRepl {
 
         GameData gameData = gameLists.get(index);
 
-        server.joinObserver(gameData.gameID());
         System.out.printf("Observing game %d%n", index+1);
 
-        printBoard(gameData);
+        ChessGame game = new ChessGame();
+        GameplayRepl gameplayRepl = new GameplayRepl(server, gameData, game);
+        gameplayRepl.run();
     }
 
     private void printHelp() {
@@ -164,24 +153,30 @@ public class PostloginRepl {
                 return;
             }
 
-            int gameID = gameLists.get(num).gameID();
-            server.joinGame(gameID, teamColor, auth.authToken());
+            GameData selected = gameLists.get(num);
+            int gameID = selected.gameID();
+            String authToken = auth.authToken();
+            String current = auth.username();
+
+            if(teamColor.equals("WHITE")) {
+                if(!current.equals(selected.whiteUsername())) {
+                    System.out.println("You are not the WHITE player in the game.");
+                    return;
+                }
+            }else {
+                if(!current.equals(selected.blackUsername())) {
+                    System.out.println("You are not the BLACK player in the game.");
+                    return;
+                }
+                server.joinGame(gameID, "black", authToken);
+            }
             System.out.println("Joined game: " + (num + 1) + " as " + teamColor);
+            ChessGame.TeamColor correctColor = ChessGame.TeamColor.valueOf(teamColor);
+            new GameplayRepl(server , gameLists.get(gameID), new ChessGame(), correctColor).run();
+
         }catch (Exception ex) {
             System.out.println("Invalid process. Please try again.");
         }
-    }
-
-    private void printBoard(GameData gameData, ChessGame.TeamColor color) {
-        ChessGame game = new ChessGame();
-        GameplayRepl gameUI = new GameplayRepl(server, gameData, game, color);
-        gameUI.run();
-    }
-
-    private void printBoard(GameData gameData) {
-        ChessGame game = new ChessGame();
-        GameplayRepl gameUI = new GameplayRepl(server, gameData, game);
-        gameUI.run();
     }
 
 }
