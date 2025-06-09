@@ -72,9 +72,9 @@ public class PreloginRepl {
     private void doLogin(String username, String password) {
         try {
             AuthData auth = server.login(username, password);
-            System.out.println("Logged in as " + auth.username());
             new PostloginRepl(server, auth).run();
         }catch (Exception ex) {
+            ex.printStackTrace();
             System.out.println("Login failed. Please try again.");
         }
     }
@@ -82,10 +82,15 @@ public class PreloginRepl {
     private void doRegister(String username, String password, String email) {
         try {
             AuthData auth = server.register(username, password, email);
-            System.out.println("Registered and logged in as " + auth.username());
+            System.out.println("Registered as " + auth.username());
             new PostloginRepl(server, auth).run();
         }catch(Exception ex) {
-            System.out.println("Register failed. Please try again.");
+            if(ex.getMessage().contains("already")) {
+                System.out.println("Already taken. Please try again.");
+            }else {
+                ex.printStackTrace();
+                System.out.println("Register failed. Please try again.");
+            }
         }
     }
 }
