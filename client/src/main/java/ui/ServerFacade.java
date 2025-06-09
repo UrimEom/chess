@@ -60,18 +60,6 @@ public class ServerFacade implements ServerMessageObserver {
         this.gameID = gameID;
     }
 
-    //join player
-    public void joinPlayer(int gameID, ChessGame.TeamColor color) {
-        UserGameCommand joinPlayerCommand = new JoinPlayerCommand(this.authToken, gameID, color);
-        this.ws.sendCommand(joinPlayerCommand);
-    }
-
-    //join observer
-    public void joinObserver(int gameID) {
-        UserGameCommand joinObserverCommand = new JoinObserverCommand(this.authToken, gameID);
-        this.ws.sendCommand(joinObserverCommand);
-    }
-
     //make move
     public void makeMove(int gameID, ChessMove move) {
         UserGameCommand makeMoveCommand = new MakeMoveCommand(this.authToken, gameID, move);
@@ -89,10 +77,6 @@ public class ServerFacade implements ServerMessageObserver {
         UserGameCommand resignCommand = new ResignCommand(this.authToken, gameID);
         this.ws.sendCommand(resignCommand);
     }
-
-//    public void clearServer() {
-//        makeRequest("DELETE", "/db", null, Void.class, null);
-//    }
 
     public String getAuthToken() {
         return this.authToken;
