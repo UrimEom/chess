@@ -56,11 +56,6 @@ public class WebsocketCommunicator {
             }
     }
 
-    @OnClose
-    public void onClose(Session session, CloseReason reason) {
-        System.out.println("WebSocket closed: " + reason.getReasonPhrase());
-    }
-
     @OnError
     public void onError(Session session, Throwable throwable) {
         System.err.println("WebSocket error: " + throwable.getMessage());
