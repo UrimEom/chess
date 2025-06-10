@@ -2,8 +2,11 @@ package ui;
 
 import chess.*;
 import model.GameData;
+import websocket.messages.LoadMessage;
+import websocket.messages.NotificationMessage;
 import websocket.messages.ServerMessage;
 
+import javax.management.Notification;
 import java.io.PrintStream;
 import java.util.Collection;
 import java.util.HashSet;
@@ -28,13 +31,22 @@ public class GameplayRepl implements ServerMessageObserver {
         this.game = game;
         this.color = color;
 
+        ChessGame initial = gameData.game();
+        game.setBoard(initial.getBoard());
+        game.setTeamTurn(initial.getTeamTurn());
+        out.println("DEBUG: GameplayRepl initialized: local color = " + color);
+//        drawBoard();
+
         server.setGameID(gameData.gameID());
         server.setObserver(this);
         server.connectWS();
-
-        if(this.color != null) {
-            server.joinGame(gameData.gameID(), color.name().toLowerCase(), server.getAuthToken());
-        }
+//        try {
+//            server.joinGame(gameData.gameID(), color.name().toLowerCase(), server.getAuthToken());
+//        }catch (RuntimeException ex) {
+//            if(!ex.getMessage().contains("already taken")) {
+//                throw ex;
+//            }
+//        }
     }
 
     public GameplayRepl(ServerFacade server, GameData gameData, ChessGame game) {
@@ -42,11 +54,14 @@ public class GameplayRepl implements ServerMessageObserver {
        this.gameData = gameData;
        this.game = game;
        this.color = null;
+
+       server.setGameID(gameData.gameID());
+       server.setObserver(this);
+       server.connectWS();
     }
 
     public void run() {
         System.out.println(" ");
-        drawBoard();
         while(true) {
             System.out.print("\n[GAME PLAY] >>> ");
             String input = scanner.nextLine().trim();
@@ -83,7 +98,6 @@ public class GameplayRepl implements ServerMessageObserver {
                         handleHighlight(inputs);
                     }else {
                         out.println("USE: highlight <square> (ex: highlight b6)");
-                        return;
                     }
                 }
                 default -> {
@@ -110,12 +124,26 @@ public class GameplayRepl implements ServerMessageObserver {
         try {
             from = parseSquare(elements[1]);
             to = parseSquare(elements[2]);
+            if(game.getTeamTurn() == color && game.getTeamTurn() == ChessGame.TeamColor.WHITE) {
+                from = new ChessPosition((9-from.getRow()),(from.getColumn()-7));
+                to = new ChessPosition((9-to.getRow()),(to.getColumn()-7));
+            }
         }catch (IllegalArgumentException ex) {
             out.println("Invalid square. Square should be a1-h8.");
             return;
         }
 
+        if(game.getTeamTurn() != color) {
+            out.println("Not your turn. Current turn: " + game.getTeamTurn());
+            return;
+        }
+
         ChessPiece piece = game.getBoard().getPiece(from);
+        if(piece == null) {
+            out.println("No piece at " + elements[1] + " to move.");
+            return;
+        }
+
         boolean isPromotion = piece.getPieceType() == ChessPiece.PieceType.PAWN
                 && ((color == ChessGame.TeamColor.WHITE && to.getRow() == 8)
                 || (color == ChessGame.TeamColor.BLACK && to.getRow() == 1));
@@ -142,16 +170,29 @@ public class GameplayRepl implements ServerMessageObserver {
         }else {
             move = new ChessMove(from, to, null);
         }
+
+
+        try {
+            game.makeMove(move);
+            server.makeMove(gameData.gameID(), move);
+        }catch(Exception e) {
+            out.println("Invalid move: " + e.getMessage());
+            return;
+        }
+
         highlighted.clear();
         drawBoard();
-        server.makeMove(gameData.gameID(), move);
     }
 
     private void handleHighlight(String[] elements) {
         String square = elements[1];
         ChessPosition position;
+
         try {
             position = parseSquare(square);
+            if(game.getTeamTurn() == color && game.getTeamTurn() == ChessGame.TeamColor.WHITE) {
+                position = new ChessPosition(9-position.getRow(), position.getColumn()-5);
+            }
         }catch (IllegalArgumentException ex) {
             out.println("Invalid square. Please enter square like b2");
             return;
@@ -192,7 +233,43 @@ public class GameplayRepl implements ServerMessageObserver {
 
     @Override
     public void notify(ServerMessage message) {
-        out.println("Server: " + message);
+        if(message instanceof NotificationMessage) {
+            String text = ((NotificationMessage) message).getMessage();
+            out.println(text);
+
+            if(text.contains("->") || text.matches(".*[a-h][1-8]\\s+[a-h][1-8].*")) {
+                String[] parts = text.replaceAll("[^a-h1-8 ]", "").trim().split(" ");
+                System.out.println(parts); //debugging
+                if(parts.length == 2) {
+                    ChessPosition from = parseSquare(parts[0]);
+                    ChessPosition to = parseSquare(parts[1]);
+                    ChessMove move = new ChessMove(from, to, null);
+                    try {
+                        game.makeMove(move);
+                    } catch (InvalidMoveException e) {
+                        throw new RuntimeException("Error: Cannot make move");
+                    }
+                    highlighted.clear();
+                    drawBoard();
+                    out.println("Current turn: " + game.getTeamTurn());
+                }else {
+                    out.println("Invalid move format: " + text);
+                }
+            }
+//            return;
+        }
+
+        if(message instanceof LoadMessage) {
+            GameData updated = ((LoadMessage) message).getGame();
+            ChessGame model = updated.game();
+            game.setBoard(model.getBoard());
+            game.setTeamTurn(model.getTeamTurn());
+            out.println("\nCurrent board:");
+            drawBoard();
+            return;
+        }
+
+        out.println("[Server] " + message);
     }
 
     public void drawBoard() {
@@ -211,7 +288,7 @@ public class GameplayRepl implements ServerMessageObserver {
             out.println();
 
             //draw rows
-            if (color == ChessGame.TeamColor.BLACK) {
+            if (this.color == ChessGame.TeamColor.BLACK) {
                 for (int row = 1; row <= 8; row++) {
                     drawBoardRow(out, board, row, true);
                 }
@@ -255,17 +332,33 @@ public class GameplayRepl implements ServerMessageObserver {
         out.print(" " + row + " ");
         out.print(EscapeSequences.RESET_TEXT_COLOR);
 
-        if(isBlack) {
-            for(char col = 'h'; col >= 'a'; col--) {
-                ChessPosition pos = new ChessPosition(row, col - 'a' + 1);
-                drawBoardSquare(out, board.getPiece(pos), row, col - 'a' + 1);
+        if(!isBlack) {
+            for(char col = 'a'; col <= 'h'; col++) {
+                int viewCol = col - 'a' + 1;
+                ChessPosition pos = new ChessPosition(9 - row, viewCol);
+                drawBoardSquare(out, board.getPiece(pos), 9 - row, viewCol);
             }
         }else {
-            for(char col = 'a'; col <= 'h'; col++) {
-                ChessPosition pos = new ChessPosition(row, col - 'a' + 1);
-                drawBoardSquare(out, board.getPiece(pos), row, col - 'a' + 1);
+            for(char col = 'h'; col >= 'a'; col--) {
+                int modelRow = 9 - row;
+                int modelCol = col - 'a' + 1;
+                int viewCol = 'h' - col + 1;
+                ChessPosition pos = new ChessPosition(modelRow, modelCol);
+                drawBoardSquare(out, board.getPiece(pos), row, viewCol);
             }
         }
+
+//        if(!isBlack) {
+//            for(char col = 'a'; col <= 'h'; col++) {
+//                ChessPosition pos = new ChessPosition(row, col - 'a' + 1);
+//                drawBoardSquare(out, board.getPiece(pos), row, col - 'a' + 1);
+//            }
+//        }else {
+//            for(char col = 'h'; col >= 'a'; col--) {
+//                ChessPosition pos = new ChessPosition(row, col - 'a' + 1);
+//                drawBoardSquare(out, board.getPiece(pos), row, col - 'a' + 1);
+//            }
+//        }
         out.print(EscapeSequences.RESET_BG_COLOR);
         out.print(EscapeSequences.RESET_TEXT_COLOR);
 
@@ -282,15 +375,17 @@ public class GameplayRepl implements ServerMessageObserver {
     private void drawBoardSquare(PrintStream out, ChessPiece piece, int row, int col) {
         ChessPosition position = new ChessPosition(row, col);
 
+        boolean isDark = ((row + col) % 2 == 0);
         //highlight legal moves
         if(position.equals(selectedPos)) {
             out.print(EscapeSequences.SET_BG_COLOR_YELLOW);
         }else if(highlighted.contains(position)) {
-            out.print(EscapeSequences.SET_BG_COLOR_GREEN);
-        }
-
-        //color square
-        if((row + col) % 2 == 1) {
+            if(isDark) {
+                out.print(EscapeSequences.SET_BG_COLOR_DARK_GREEN);
+            }else {
+                out.print(EscapeSequences.SET_BG_COLOR_GREEN);
+            }
+        }else if((row + col) % 2 == 1) {
             out.print(EscapeSequences.SET_BG_COLOR_WHITE);
         }else {
             out.print(EscapeSequences.SET_BG_COLOR_BLACK);
@@ -300,7 +395,7 @@ public class GameplayRepl implements ServerMessageObserver {
         if(piece == null) {
             out.print("   ");
         }else {
-            if(piece.getTeamColor() == ChessGame.TeamColor.BLACK) {
+            if(piece.getTeamColor() == ChessGame.TeamColor.WHITE) {
                 out.print(EscapeSequences.SET_TEXT_COLOR_BLUE);
             }else {
                 out.print(EscapeSequences.SET_TEXT_COLOR_RED);
@@ -326,12 +421,31 @@ public class GameplayRepl implements ServerMessageObserver {
         char alphabet = str.charAt(0);
         char number = str.charAt(1);
 
-        int col = alphabet - 'a' + 1;
-        int row = number - '1' + 1;
-
-        if(col < 1 || col > 8 || row < 1 || row > 8) {
+        if(alphabet < 'a' || alphabet > 'h' || number < '1' || number > '8') {
             throw new IllegalArgumentException("Square is out of range: " + str);
         }
+
+        int alphabetIndex = alphabet - 'a';
+        int numIndex = number - '1';
+
+        int row;
+        int col;
+        if(color == ChessGame.TeamColor.WHITE) {
+            col = 8 - alphabetIndex;
+            row = numIndex + 1;
+        }else {
+            col = alphabetIndex + 1;
+            row = 8 - numIndex;
+        }
+
+        if(row < 0  || row > 8 || col < 0 || col > 8 ) {
+            throw new IllegalArgumentException("Square is out of range: " + str);
+        }
+
+//        if(color == ChessGame.TeamColor.WHITE) {
+//            row = 9 - row;
+//        }
+
         return new ChessPosition(row, col);
     }
 }
