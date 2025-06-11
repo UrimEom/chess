@@ -1,6 +1,5 @@
 package ui;
 
-import chess.ChessGame;
 import chess.ChessMove;
 import model.AuthData;
 import model.GameData;
@@ -84,13 +83,19 @@ public class ServerFacade implements ServerMessageObserver {
         this.ws.sendCommand(resignCommand);
     }
 
+
+    public void clearServer() {
+        http.clearServer();
+        this.authToken = null;
+        this.gameID = 0;
+    }
+
     public String getAuthToken() {
         return this.authToken;
     }
 
     protected void setAuthToken(String authToken) {
         this.authToken = authToken;
-        //maybe add exception?
     }
 
     public void setGameID(int gameID) {
