@@ -230,7 +230,7 @@ public class GameplayRepl implements ServerMessageObserver {
     public void notify(ServerMessage message) {
         if(message instanceof NotificationMessage) {
             String text = ((NotificationMessage) message).getMessage();
-//            out.println(text);
+            out.println(text);
 
             if(text.matches(".*[a-h][1-8]\\s+[a-h][1-8].*")) {
                 String[] parts = text.replaceAll("[^a-h1-8 ]", "").trim().split(" ");
