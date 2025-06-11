@@ -74,7 +74,6 @@ public class PreloginRepl {
             AuthData auth = server.login(username, password);
             new PostloginRepl(server, auth).run();
         }catch (Exception ex) {
-            ex.printStackTrace();
             System.out.println("Login failed. Please try again.");
         }
     }
