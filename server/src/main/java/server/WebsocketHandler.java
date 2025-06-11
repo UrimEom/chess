@@ -2,6 +2,7 @@ package server;
 
 import chess.ChessGame;
 import chess.ChessMove;
+import chess.ChessPosition;
 import chess.InvalidMoveException;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -184,7 +185,12 @@ public class WebsocketHandler {
             send(s, load);
         }
 
-        NotificationMessage notification = new NotificationMessage(String.format("Move made: %s", command.getMove()));
+        String user = auth.username();
+        ChessMove move = command.getMove();
+        ChessPosition from = move.getStartPosition();
+        ChessPosition to = move.getEndPosition();
+        String moveDescription = from.toString() + " -> " + to.toString();
+        NotificationMessage notification = new NotificationMessage(String.format("%s moved: %s", user, moveDescription));
         for(Session s : existing) {
             if(!s.equals(session)) {
                 send(s, notification);
