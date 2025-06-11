@@ -25,35 +25,29 @@ public class GameplayRepl implements ServerMessageObserver {
     private final Set<ChessPosition> highlighted = new HashSet<>();
     private ChessPosition selectedPos = null;
 
+    private boolean isObserver;
+
+    //Constructor for player
     public GameplayRepl(ServerFacade server, GameData gameData, ChessGame game, ChessGame.TeamColor color) {
         this.server = server;
         this.gameData = gameData;
         this.game = game;
         this.color = color;
-
-//        ChessGame initial = gameData.game();
-//        game.setBoard(initial.getBoard());
-//        game.setTeamTurn(initial.getTeamTurn());
-//        out.println("DEBUG: GameplayRepl initialized: local color = " + color);
-//        drawBoard();
+        this.isObserver = false;
 
         server.setGameID(gameData.gameID());
         server.setObserver(this);
         server.connectWS();
-//        try {
-//            server.joinGame(gameData.gameID(), color.name().toLowerCase(), server.getAuthToken());
-//        }catch (RuntimeException ex) {
-//            if(!ex.getMessage().contains("already taken")) {
-//                throw ex;
-//            }
-//        }
+
     }
 
+    //Constructor for observer
     public GameplayRepl(ServerFacade server, GameData gameData, ChessGame game) {
        this.server = server;
        this.gameData = gameData;
        this.game = game;
        this.color = null;
+       this.isObserver = true;
 
        server.setGameID(gameData.gameID());
        server.setObserver(this);
@@ -83,19 +77,27 @@ public class GameplayRepl implements ServerMessageObserver {
                     return;
                 }
                 case "move" -> {
-                    if(inputs.length >= 3) {
+                    if(inputs.length >= 3 && !isObserver) {
                         handleMakeMove(inputs);
+                    }else if(isObserver) {
+                        out.println("You are observing game.");
                     }else {
                         out.println("USE: move <FROM> <TO> <PROMOTION_PIECE>");
                     }
                 }
                 case "resign" -> {
-                    server.resignGame(gameData.gameID());
-                    return;
+                    if(!isObserver) {
+                        server.resignGame(gameData.gameID());
+                        return;
+                    }else if(isObserver) {
+                        out.println("You are observing game.");
+                    }
                 }
                 case "highlight" -> {
-                    if(inputs.length == 2 && inputs[1].matches("[a-h][1-8]")) {
+                    if(inputs.length == 2 && inputs[1].matches("[a-h][1-8]") && !isObserver) {
                         handleHighlight(inputs);
+                    }else if(isObserver) {
+                        out.println("You are observing game.");
                     }else {
                         out.println("USE: highlight <square> (ex: highlight b6)");
                     }
@@ -140,22 +142,19 @@ public class GameplayRepl implements ServerMessageObserver {
             return;
         }
 
-        boolean isPromotion = piece.getPieceType() == ChessPiece.PieceType.PAWN
-                && ((color == ChessGame.TeamColor.WHITE && to.getRow() == 8)
-                || (color == ChessGame.TeamColor.BLACK && to.getRow() == 1));
+        boolean isPromotion = elements.length == 4
+                && piece.getPieceType() == ChessPiece.PieceType.PAWN;
         ChessMove move;
         if(isPromotion) {
             ChessPiece.PieceType promotionPiece = null;
-            String option = elements.length == 4 ? elements[3].toUpperCase() : null;
+            String option = elements[3].toUpperCase();
             while (promotionPiece == null) {
-                if(option != null) {
-                    switch (option) {
-                        case "QUEEN" -> promotionPiece = ChessPiece.PieceType.QUEEN;
-                        case "BISHOP" -> promotionPiece = ChessPiece.PieceType.BISHOP;
-                        case "ROOK" -> promotionPiece = ChessPiece.PieceType.ROOK;
-                        case "KNIGHT" -> promotionPiece = ChessPiece.PieceType.KNIGHT;
-                        default -> option = null;
-                    }
+                switch (option) {
+                    case "QUEEN" -> promotionPiece = ChessPiece.PieceType.QUEEN;
+                    case "BISHOP" -> promotionPiece = ChessPiece.PieceType.BISHOP;
+                    case "ROOK" -> promotionPiece = ChessPiece.PieceType.ROOK;
+                    case "KNIGHT" -> promotionPiece = ChessPiece.PieceType.KNIGHT;
+                    default -> out.println("Please choose proper promotion piece.");
                 }
                 if (promotionPiece == null) {
                     out.println("Choose piece for the promotion.");
@@ -172,8 +171,7 @@ public class GameplayRepl implements ServerMessageObserver {
             game.makeMove(move);
             server.makeMove(gameData.gameID(), move);
         }catch(Exception e) {
-            out.println("Invalid move: " + e.getMessage());
-            return;
+            out.println(e.getMessage());
         }
     }
 
@@ -232,7 +230,7 @@ public class GameplayRepl implements ServerMessageObserver {
     public void notify(ServerMessage message) {
         if(message instanceof NotificationMessage) {
             String text = ((NotificationMessage) message).getMessage();
-            out.println(text);
+//            out.println(text);
 
             if(text.matches(".*[a-h][1-8]\\s+[a-h][1-8].*")) {
                 String[] parts = text.replaceAll("[^a-h1-8 ]", "").trim().split(" ");
