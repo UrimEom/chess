@@ -56,11 +56,6 @@ public class WebsocketCommunicator {
             }
     }
 
-    @OnError
-    public void onError(Session session, Throwable throwable) {
-        System.err.println("WebSocket error: " + throwable.getMessage());
-    }
-
     public void sendCommand(UserGameCommand command) {
         if(session == null || !session.isOpen()) {
             throw new IllegalStateException("Websocket was not opened");

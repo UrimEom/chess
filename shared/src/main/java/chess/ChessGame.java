@@ -410,9 +410,7 @@ public class ChessGame {
             }
         }
         //if King is not found
-        if(kingPos == null) {
-            return false;
-        }
+        if(kingPos == null) { return false; }
         //find enemy pieces
         for(int row = 1; row <= 8; row++) {
             for(int col = 1; col <= 8; col++) {
@@ -437,9 +435,7 @@ public class ChessGame {
      */
     public boolean isInCheckmate(TeamColor teamColor) {
         //check if the team is in check
-        if(!isInCheck(teamColor)) {
-            return false;
-        }
+        if(!isInCheck(teamColor)) { return false; }
         //no valid move and when it is in checkmate
         return !isValidMove(teamColor);
     }
@@ -458,6 +454,7 @@ public class ChessGame {
         //No valid move and when it is not in check
         return !isValidMove(teamColor);
     }
+
     private boolean isValidMove(TeamColor teamColor) { //Check if there is valid move
         for(int row = 1; row <= 8; row++) {
             for(int col = 1; col <= 8; col++) {
@@ -478,35 +475,24 @@ public class ChessGame {
      *
      * @param board the new board to use
      */
-    public void setBoard(ChessBoard board) {
-        this.board = board;
-    }
+    public void setBoard(ChessBoard board) { this.board = board; }
     /**
      * Gets the current chessboard
      *
      * @return the chessboard
      */
-    public ChessBoard getBoard() {
-        return board;
-    }
+    public ChessBoard getBoard() { return board; }
 
-    public void setGameOver(boolean gameOver) {
-        this.gameOver = gameOver;
-    }
+    public void setGameOver(boolean gameOver) { this.gameOver = gameOver; }
 
-    public boolean getGameOver() {
-        return gameOver;
-    }
+    public boolean getGameOver() { return gameOver; }
+
     @Override
     public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
+        if (o == null || getClass() != o.getClass()) { return false; }
         ChessGame chessGame = (ChessGame) o;
         return team == chessGame.team && Objects.equals(board, chessGame.board);
     }
     @Override
-    public int hashCode() {
-        return Objects.hash(team, board);
-    }
+    public int hashCode() { return Objects.hash(team, board); }
 }

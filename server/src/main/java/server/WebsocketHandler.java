@@ -27,10 +27,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @WebSocket
 public class WebsocketHandler {
-    private static final Map<Session, Integer> gameSessions = new ConcurrentHashMap<>();
-    private static final Map<Integer, Set<Session>> inGameSessions = new ConcurrentHashMap<>();
-    private static final Map<Session, AuthData> authSessions = new ConcurrentHashMap<>();
-    private static final Gson gson = new Gson();
+    private static final Map<Session, Integer> GAME_SESSIONS = new ConcurrentHashMap<>();
+    private static final Map<Integer, Set<Session>> IN_GAME_SESSION = new ConcurrentHashMap<>();
+    private static final Map<Session, AuthData> AUTHSESSIONS = new ConcurrentHashMap<>();
+    private static final Gson GSON = new Gson();
 
     @OnWebSocketConnect
     public void onConnect(Session session) {
@@ -53,52 +53,61 @@ public class WebsocketHandler {
         String type = rawType.toUpperCase();
         switch (type) {
             case "CONNECT" -> {
-                ConnectCommand command = gson.fromJson(message, ConnectCommand.class);
+                ConnectCommand command = GSON.fromJson(message, ConnectCommand.class);
                 handleConnect(session, command);
             }
             case "MAKE_MOVE" -> {
-                MakeMoveCommand command = gson.fromJson(message, MakeMoveCommand.class);
+                MakeMoveCommand command = GSON.fromJson(message, MakeMoveCommand.class);
                 handleMakeMove(session, command);
             }
             case "RESIGN" -> {
-                ResignCommand command = gson.fromJson(message, ResignCommand.class);
+                ResignCommand command = GSON.fromJson(message, ResignCommand.class);
                 handleResign(session, command);
             }
             case "LEAVE" -> {
-                LeaveCommand command = gson.fromJson(message, LeaveCommand.class);
+                LeaveCommand command = GSON.fromJson(message, LeaveCommand.class);
                 handleLeave(session, command);
             }
             default -> send(session, new ErrorMessage("Unknown command type."));
         }
     }
 
+    private AuthData validateAuth(Session session, String authToken) {
+        try {
+            return Server.USER_SERVICE.getAuth(authToken);
+        } catch (DataAccessException ex) {
+            sendError(session, new ErrorMessage("Error: Unauthorized"));
+            return null;
+        }
+    }
+
+    private GameData validateGameData(Session session, String authToken, int gameID) {
+        try {
+            GameData gameData = Server.GAME_SERVICE.getGameData(authToken, gameID);
+            if(gameData == null) {
+                sendError(session, new ErrorMessage("Error: Invalid game"));
+            }
+            return gameData;
+        } catch (DataAccessException ex) {
+            sendError(session, new ErrorMessage("Error: Invalid game"));
+            return null;
+        }
+    }
+
     private void handleConnect(Session session, ConnectCommand command) {
         String authToken = command.getAuthToken();
         int gameID = command.getGameID();
-        AuthData auth;
-        try {
-            auth = Server.userService.getAuth(authToken);
-        }catch (DataAccessException e) {
-            sendError(session, new ErrorMessage("Error: Unauthorized"));
-            return;
-        }
 
-        authSessions.put(session, auth);
-        gameSessions.put(session, gameID);
+        AuthData auth = validateAuth(session, authToken);
+        if(auth == null) { return; }
 
-        GameData gameData;
-        try {
-            gameData = Server.gameService.getGameData(authToken, gameID);
-        }catch (DataAccessException e) {
-            sendError(session, new ErrorMessage("Error: Invalid game"));
-            return;
-        }
-        if(gameData == null) {
-            sendError(session, new ErrorMessage("Error: Invalid game"));
-            return;
-        }
+        AUTHSESSIONS.put(session, auth);
+        GAME_SESSIONS.put(session, gameID);
 
-        Set<Session> existing = inGameSessions.getOrDefault(gameID, Collections.emptySet());
+        GameData gameData = validateGameData(session, authToken, gameID);
+        if(gameData == null) { return; }
+
+        Set<Session> existing = IN_GAME_SESSION.getOrDefault(gameID, Collections.emptySet());
         String username = auth.username();
         String player = username.equals(gameData.whiteUsername())
                 ? "white player" : username.equals(gameData.blackUsername())
@@ -108,10 +117,10 @@ public class WebsocketHandler {
             send(other, notification);
         }
 
-        if(!inGameSessions.containsKey(gameID)) {
-            inGameSessions.put(gameID, new HashSet<>());
+        if(!IN_GAME_SESSION.containsKey(gameID)) {
+            IN_GAME_SESSION.put(gameID, new HashSet<>());
         }
-        inGameSessions.get(gameID).add(session);
+        IN_GAME_SESSION.get(gameID).add(session);
 
         send(session, new LoadMessage(gameData));
     }
@@ -120,30 +129,16 @@ public class WebsocketHandler {
         int gameID = command.getGameID();
         String authToken = command.getAuthToken();
 
-        AuthData auth;
-        try {
-            auth = Server.userService.getAuth(authToken);
-        } catch (DataAccessException ex) {
-            sendError(session, new ErrorMessage("Error: Unauthorized"));
-            return;
-        }
+        AuthData auth = validateAuth(session, authToken);
+        if(auth == null) { return; }
 
-        GameData gameData;
-        try {
-            gameData = Server.gameService.getGameData(authToken, gameID);
-        } catch (DataAccessException ex) {
-            sendError(session, new ErrorMessage("Error: Invalid game"));
-            return;
-        }
-        if(gameData == null) {
-            sendError(session, new ErrorMessage("Error: Invalid game"));
-            return;
-        }
+        GameData gameData = validateGameData(session, authToken, gameID);
+        if(gameData == null) { return; }
 
         if(gameData.game() == null) {
             gameData = new GameData(gameData.gameID(), gameData.whiteUsername(), gameData.blackUsername(), gameData.gameName(), new ChessGame());
             try {
-                Server.gameService.updateGame(authToken, gameData);
+                Server.GAME_SERVICE.updateGame(authToken, gameData);
             }catch (DataAccessException ex) { }
         }
 
@@ -173,14 +168,14 @@ public class WebsocketHandler {
         }
 
         try {
-            Server.gameService.updateGame(authToken, gameData);
+            Server.GAME_SERVICE.updateGame(authToken, gameData);
         } catch (DataAccessException ex) {
             sendError(session, new ErrorMessage("Error: Unable to persist game"));
             return;
         }
 
         LoadMessage load = new LoadMessage(gameData);
-        Set<Session> existing = inGameSessions.getOrDefault(gameID, Collections.emptySet());
+        Set<Session> existing = IN_GAME_SESSION.getOrDefault(gameID, Collections.emptySet());
         for(Session s : existing) {
             send(s, load);
         }
@@ -217,30 +212,16 @@ public class WebsocketHandler {
         int gameID = command.getGameID();
         String authToken = command.getAuthToken();
 
-        AuthData auth;
-        try {
-            auth = Server.userService.getAuth(authToken);
-        } catch (DataAccessException ex) {
-            sendError(session, new ErrorMessage("Error: Unauthorized"));
-            return;
-        }
+        AuthData auth = validateAuth(session, authToken);
+        if(auth == null) { return; }
 
-        GameData gameData;
-        try {
-            gameData = Server.gameService.getGameData(authToken, gameID);
-        } catch (DataAccessException ex) {
-            sendError(session, new ErrorMessage("Error: Invalid game"));
-            return;
-        }
-        if(gameData == null) {
-            sendError(session, new ErrorMessage("Error: Invalid game"));
-            return;
-        }
+        GameData gameData = validateGameData(session, authToken, gameID);
+        if(gameData == null) { return; }
 
         if(gameData.game() == null) {
             gameData = new GameData(gameData.gameID(), gameData.whiteUsername(), gameData.blackUsername(), gameData.gameName(), new ChessGame());
             try {
-                Server.gameService.updateGame(authToken, gameData);
+                Server.GAME_SERVICE.updateGame(authToken, gameData);
             }catch (DataAccessException ex) { }
         }
 
@@ -258,12 +239,12 @@ public class WebsocketHandler {
         gameData.game().setGameOver(true);
 
         try {
-            Server.gameService.updateGame(authToken, gameData);
+            Server.GAME_SERVICE.updateGame(authToken, gameData);
         }catch (DataAccessException ex) { //ignore
         }
 
         String user = auth.username() + " resigned";
-        Set<Session> existing = inGameSessions.getOrDefault(gameID, Collections.emptySet());
+        Set<Session> existing = IN_GAME_SESSION.getOrDefault(gameID, Collections.emptySet());
         for(Session s: existing) {
             if(s.equals(session)) {
                 send(s, new NotificationMessage(user)); //notify the user who resigned
@@ -277,27 +258,13 @@ public class WebsocketHandler {
         int gameID = command.getGameID();
         String authToken = command.getAuthToken();
 
-        AuthData auth;
-        try {
-            auth = Server.userService.getAuth(authToken);
-        } catch (DataAccessException ex) {
-            sendError(session, new ErrorMessage("Error: Unauthorized"));
-            return;
-        }
+        AuthData auth = validateAuth(session, authToken);
+        if(auth == null) { return; }
 
-        GameData gameData;
-        try {
-            gameData = Server.gameService.getGameData(authToken, gameID);
-        } catch (DataAccessException ex) {
-            sendError(session, new ErrorMessage("Error: Invalid game"));
-            return;
-        }
-        if(gameData == null) {
-            sendError(session, new ErrorMessage("Error: Invalid game"));
-            return;
-        }
+        GameData gameData = validateGameData(session, authToken, gameID);
+        if(gameData == null) { return; }
 
-        inGameSessions.getOrDefault(gameID, Set.of()).remove(session);
+        IN_GAME_SESSION.getOrDefault(gameID, Set.of()).remove(session);
         String username = auth.username();
         String player = username.equals(gameData.whiteUsername())
                 ? "White player" : username.equals(gameData.blackUsername())
@@ -307,16 +274,16 @@ public class WebsocketHandler {
 
     @OnWebSocketClose
     public void onClose(Session session, int statusCode, String reason) {
-        Integer gameID = gameSessions.remove(session);
+        Integer gameID = GAME_SESSIONS.remove(session);
         if(gameID != null) {
-            inGameSessions.getOrDefault(gameID, Set.of()).remove(session);
+            IN_GAME_SESSION.getOrDefault(gameID, Set.of()).remove(session);
         }
-        authSessions.remove(session);
+        AUTHSESSIONS.remove(session);
         System.out.println("WebSocket close: " + reason);
     }
 
     private void sendToGame(int gameID, ServerMessage message) {
-        for(Session s: inGameSessions.getOrDefault(gameID, Set.of())) {
+        for(Session s: IN_GAME_SESSION.getOrDefault(gameID, Set.of())) {
             if(s.isOpen()) {
                 send(s, message);
             }
@@ -325,7 +292,7 @@ public class WebsocketHandler {
 
     private void send(Session session, ServerMessage message) {
         try {
-            session.getRemote().sendString(gson.toJson(message));
+            session.getRemote().sendString(GSON.toJson(message));
         }catch (IOException e) {
             System.err.println("Send error: " + e.getMessage());
         }
@@ -333,7 +300,7 @@ public class WebsocketHandler {
 
     private void sendError(Session session, ErrorMessage errorMessage) {
         try {
-            session.getRemote().sendString(gson.toJson(errorMessage));
+            session.getRemote().sendString(GSON.toJson(errorMessage));
         }catch (Exception e) {
              //ignore
         }

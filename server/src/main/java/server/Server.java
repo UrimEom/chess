@@ -7,8 +7,8 @@ import spark.*;
 
 
 public class Server {
-    public static final UserService userService = new UserService(new MySqlUserDAO(), new MySqlAuthDAO());
-    public static final GameService gameService = new GameService(new MySqlGameDAO(), new MySqlAuthDAO());
+    public static final UserService USER_SERVICE = new UserService(new MySqlUserDAO(), new MySqlAuthDAO());
+    public static final GameService GAME_SERVICE = new GameService(new MySqlGameDAO(), new MySqlAuthDAO());
 
     public int run(int desiredPort) {
         Spark.port(desiredPort);
@@ -30,7 +30,7 @@ public class Server {
             // Register your endpoints and handle exceptions here.
             Spark.post("/user", new RegisterHandler(userDAO, authDAO)::handler);
             Spark.post("/session", new LoginHandler(userDAO, authDAO)::handler);
-            Spark.delete("/session", new LogoutHandler(userService, authDAO)::handler);
+            Spark.delete("/session", new LogoutHandler(USER_SERVICE, authDAO)::handler);
             Spark.get("/game", new ListHandler(gameDAO, authDAO)::handler);
             Spark.post("/game", new CreateHandler(gameDAO, authDAO)::handler);
             Spark.put("/game", new JoinHandler(gameDAO, authDAO)::handler);
