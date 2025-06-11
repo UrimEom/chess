@@ -151,31 +151,31 @@ public class WebsocketHandler {
 
         ChessGame.TeamColor userColor = getTeamColor(auth.username(), gameData);
         if (userColor == null) {
-            sendError(session, new ErrorMessage("Observing game"));
+            sendError(session, new ErrorMessage("Error: Observing game"));
             return;
         }
 
         if (game.getGameOver()) {
-            sendError(session, new ErrorMessage("Game is over"));
+            sendError(session, new ErrorMessage("Error: Game is over"));
             return;
         }
 
         if (!game.getTeamTurn().equals(userColor)) {
-            sendError(session, new ErrorMessage("Not your turn"));
+            sendError(session, new ErrorMessage("Error: Not your turn"));
             return;
         }
 
         try {
             game.makeMove(command.getMove());
         } catch (InvalidMoveException ex) {
-            sendError(session, new ErrorMessage("Invalid move"));
+            sendError(session, new ErrorMessage("Error: Invalid move"));
             return;
         }
 
         try {
             Server.gameService.updateGame(authToken, gameData);
         } catch (DataAccessException ex) {
-            sendError(session, new ErrorMessage("Unable to persist game"));
+            sendError(session, new ErrorMessage("Error: Unable to persist game"));
             return;
         }
 
@@ -186,6 +186,7 @@ public class WebsocketHandler {
         }
 
         String user = auth.username();
+
         ChessMove move = command.getMove();
         ChessPosition from = move.getStartPosition();
         ChessPosition to = move.getEndPosition();
@@ -194,6 +195,22 @@ public class WebsocketHandler {
         for(Session s : existing) {
             if(!s.equals(session)) {
                 send(s, notification);
+            }
+        }
+
+        ChessGame.TeamColor enemy = game.getTeamTurn();
+        String enemyName = (enemy == ChessGame.TeamColor.WHITE) ? gameData.whiteUsername(): gameData.blackUsername();
+        if(game.isInCheck(enemy)) {
+            NotificationMessage inCheck = new NotificationMessage(String.format("%s is in check!", enemyName));
+            for(Session s : existing) {
+                send(s, inCheck);
+            }
+        }
+
+        if(game.isInCheckmate(enemy)) {
+            NotificationMessage inCheckmate = new NotificationMessage(String.format("%s is in checkmate! Game over.", enemyName));
+            for(Session s : existing) {
+                send(s, inCheckmate);
             }
         }
     }
@@ -231,12 +248,12 @@ public class WebsocketHandler {
 
         ChessGame.TeamColor userColor = getTeamColor(auth.username(), gameData);
         if(userColor == null) {
-            sendError(session, new ErrorMessage("Observing game"));
+            sendError(session, new ErrorMessage("Error: Observing game"));
             return;
         }
 
         if(gameData.game().getGameOver()) {
-            sendError(session, new ErrorMessage("Game is over"));
+            sendError(session, new ErrorMessage("Error: Game is over"));
             return;
         }
 
@@ -260,8 +277,34 @@ public class WebsocketHandler {
 
     private void handleLeave(Session session, LeaveCommand command) {
         int gameID = command.getGameID();
+        String authToken = command.getAuthToken();
+
+        AuthData auth;
+        try {
+            auth = Server.userService.getAuth(authToken);
+        } catch (DataAccessException ex) {
+            sendError(session, new ErrorMessage("Error: Unauthorized"));
+            return;
+        }
+
+        GameData gameData;
+        try {
+            gameData = Server.gameService.getGameData(authToken, gameID);
+        } catch (DataAccessException ex) {
+            sendError(session, new ErrorMessage("Error: Invalid game"));
+            return;
+        }
+        if(gameData == null) {
+            sendError(session, new ErrorMessage("Error: Invalid game"));
+            return;
+        }
+
         inGameSessions.getOrDefault(gameID, Set.of()).remove(session);
-        sendToGame(gameID, new NotificationMessage("Player left the game."));
+        String username = auth.username();
+        String player = username.equals(gameData.whiteUsername())
+                ? "White player" : username.equals(gameData.blackUsername())
+                ? "Black player" :"Observer";
+        sendToGame(gameID, new NotificationMessage(String.format("%s-%s: left the game.", player, username)));
     }
 
     @OnWebSocketClose
