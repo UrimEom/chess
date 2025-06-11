@@ -94,6 +94,19 @@ public class WebsocketHandler {
         }
     }
 
+    private GameData validateInitializedGame(Session session, String authToken, GameData gameData) {
+        if(gameData.game() == null) {
+            GameData fresh = new GameData(gameData.gameID(), gameData.whiteUsername(), gameData.blackUsername(), gameData.gameName(), new ChessGame());
+            try {
+                Server.GAME_SERVICE.updateGame(authToken, fresh);
+            }catch (DataAccessException ex) {
+                //ignore
+            }
+            return fresh;
+        }
+        return gameData;
+    }
+
     private void handleConnect(Session session, ConnectCommand command) {
         String authToken = command.getAuthToken();
         int gameID = command.getGameID();
@@ -135,12 +148,7 @@ public class WebsocketHandler {
         GameData gameData = validateGameData(session, authToken, gameID);
         if(gameData == null) { return; }
 
-        if(gameData.game() == null) {
-            gameData = new GameData(gameData.gameID(), gameData.whiteUsername(), gameData.blackUsername(), gameData.gameName(), new ChessGame());
-            try {
-                Server.GAME_SERVICE.updateGame(authToken, gameData);
-            }catch (DataAccessException ex) { }
-        }
+        gameData = validateInitializedGame(session, authToken, gameData);
 
         ChessGame game = gameData.game();
 
@@ -218,12 +226,7 @@ public class WebsocketHandler {
         GameData gameData = validateGameData(session, authToken, gameID);
         if(gameData == null) { return; }
 
-        if(gameData.game() == null) {
-            gameData = new GameData(gameData.gameID(), gameData.whiteUsername(), gameData.blackUsername(), gameData.gameName(), new ChessGame());
-            try {
-                Server.GAME_SERVICE.updateGame(authToken, gameData);
-            }catch (DataAccessException ex) { }
-        }
+        gameData = validateInitializedGame(session, authToken, gameData);
 
         ChessGame.TeamColor userColor = getTeamColor(auth.username(), gameData);
         if(userColor == null) {
