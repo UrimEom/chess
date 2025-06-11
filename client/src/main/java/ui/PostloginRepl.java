@@ -106,7 +106,7 @@ public class PostloginRepl {
 
         GameData gameData = gameLists.get(index);
 
-        System.out.printf("Observing game %d%n", index+1);
+        System.out.printf("Observing game %d", index+1);
 
         ChessGame game = new ChessGame();
         GameplayRepl gameplayRepl = new GameplayRepl(server, gameData, game);
