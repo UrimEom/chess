@@ -185,7 +185,6 @@ public class PostloginRepl {
             if(ex.getMessage().contains("already taken")) {
                 System.out.println("That color is already taken. Please try again.");
             }else {
-                ex.printStackTrace();
                 System.out.println("Invalid process. Please try again.");
             }
         }
