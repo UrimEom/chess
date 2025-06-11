@@ -200,17 +200,15 @@ public class WebsocketHandler {
 
         ChessGame.TeamColor enemy = game.getTeamTurn();
         String enemyName = (enemy == ChessGame.TeamColor.WHITE) ? gameData.whiteUsername(): gameData.blackUsername();
-        if(game.isInCheck(enemy)) {
-            NotificationMessage inCheck = new NotificationMessage(String.format("%s is in check!", enemyName));
-            for(Session s : existing) {
-                send(s, inCheck);
-            }
-        }
-
         if(game.isInCheckmate(enemy)) {
             NotificationMessage inCheckmate = new NotificationMessage(String.format("%s is in checkmate! Game over.", enemyName));
             for(Session s : existing) {
                 send(s, inCheckmate);
+            }
+        }else if(game.isInCheck(enemy)) {
+            NotificationMessage inCheck = new NotificationMessage(String.format("%s is in check!", enemyName));
+            for(Session s : existing) {
+                send(s, inCheck);
             }
         }
     }
