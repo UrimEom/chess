@@ -96,7 +96,8 @@ public class WebsocketHandler {
 
     private GameData validateInitializedGame(Session session, String authToken, GameData gameData) {
         if(gameData.game() == null) {
-            GameData fresh = new GameData(gameData.gameID(), gameData.whiteUsername(), gameData.blackUsername(), gameData.gameName(), new ChessGame());
+            GameData fresh = new GameData(gameData.gameID(), gameData.whiteUsername(),
+                    gameData.blackUsername(), gameData.gameName(), new ChessGame());
             try {
                 Server.GAME_SERVICE.updateGame(authToken, fresh);
             }catch (DataAccessException ex) {
