@@ -18,7 +18,7 @@ import static java.lang.System.out;
 public class GameplayRepl implements ServerMessageObserver {
     private final ServerFacade server;
     private final GameData gameData;
-    private final ChessGame game;
+    private ChessGame game = new ChessGame();
     private final ChessGame.TeamColor color;
     private final Scanner scanner = new Scanner(System.in);
 
@@ -31,10 +31,10 @@ public class GameplayRepl implements ServerMessageObserver {
         this.game = game;
         this.color = color;
 
-        ChessGame initial = gameData.game();
-        game.setBoard(initial.getBoard());
-        game.setTeamTurn(initial.getTeamTurn());
-        out.println("DEBUG: GameplayRepl initialized: local color = " + color);
+//        ChessGame initial = gameData.game();
+//        game.setBoard(initial.getBoard());
+//        game.setTeamTurn(initial.getTeamTurn());
+//        out.println("DEBUG: GameplayRepl initialized: local color = " + color);
 //        drawBoard();
 
         server.setGameID(gameData.gameID());
@@ -124,10 +124,6 @@ public class GameplayRepl implements ServerMessageObserver {
         try {
             from = parseSquare(elements[1]);
             to = parseSquare(elements[2]);
-            if(game.getTeamTurn() == color && game.getTeamTurn() == ChessGame.TeamColor.WHITE) {
-                from = new ChessPosition((9-from.getRow()),(from.getColumn()-7));
-                to = new ChessPosition((9-to.getRow()),(to.getColumn()-7));
-            }
         }catch (IllegalArgumentException ex) {
             out.println("Invalid square. Square should be a1-h8.");
             return;
@@ -179,9 +175,6 @@ public class GameplayRepl implements ServerMessageObserver {
             out.println("Invalid move: " + e.getMessage());
             return;
         }
-
-        highlighted.clear();
-        drawBoard();
     }
 
     private void handleHighlight(String[] elements) {
@@ -190,9 +183,6 @@ public class GameplayRepl implements ServerMessageObserver {
 
         try {
             position = parseSquare(square);
-            if(game.getTeamTurn() == color && game.getTeamTurn() == ChessGame.TeamColor.WHITE) {
-                position = new ChessPosition(9-position.getRow(), position.getColumn()-5);
-            }
         }catch (IllegalArgumentException ex) {
             out.println("Invalid square. Please enter square like b2");
             return;
@@ -220,15 +210,22 @@ public class GameplayRepl implements ServerMessageObserver {
             return;
         }
 
-        selectedPos = position;
+
+        if(game.getTeamTurn() != color) {
+            System.out.println("This is not your turn.");
+            return;
+        }
+
+        selectedPos = parseViewSquare(position);
         highlighted.clear();
         for(ChessMove m : moves) {
-            highlighted.add(m.getEndPosition());
+            highlighted.add(parseViewSquare(m.getEndPosition()));
         }
 
         drawBoard();
         out.println("Highlighted legal moves for " + square);
-
+        highlighted.clear();
+        selectedPos = null;
     }
 
     @Override
@@ -237,7 +234,7 @@ public class GameplayRepl implements ServerMessageObserver {
             String text = ((NotificationMessage) message).getMessage();
             out.println(text);
 
-            if(text.contains("->") || text.matches(".*[a-h][1-8]\\s+[a-h][1-8].*")) {
+            if(text.matches(".*[a-h][1-8]\\s+[a-h][1-8].*")) {
                 String[] parts = text.replaceAll("[^a-h1-8 ]", "").trim().split(" ");
                 System.out.println(parts); //debugging
                 if(parts.length == 2) {
@@ -256,16 +253,20 @@ public class GameplayRepl implements ServerMessageObserver {
                     out.println("Invalid move format: " + text);
                 }
             }
-//            return;
+            return;
         }
 
         if(message instanceof LoadMessage) {
             GameData updated = ((LoadMessage) message).getGame();
             ChessGame model = updated.game();
-            game.setBoard(model.getBoard());
-            game.setTeamTurn(model.getTeamTurn());
+            if(model != null) {
+                this.game = model;
+            }
+
+            highlighted.clear();
             out.println("\nCurrent board:");
             drawBoard();
+            out.println("Current turn: " + game.getTeamTurn());
             return;
         }
 
@@ -348,17 +349,6 @@ public class GameplayRepl implements ServerMessageObserver {
             }
         }
 
-//        if(!isBlack) {
-//            for(char col = 'a'; col <= 'h'; col++) {
-//                ChessPosition pos = new ChessPosition(row, col - 'a' + 1);
-//                drawBoardSquare(out, board.getPiece(pos), row, col - 'a' + 1);
-//            }
-//        }else {
-//            for(char col = 'h'; col >= 'a'; col--) {
-//                ChessPosition pos = new ChessPosition(row, col - 'a' + 1);
-//                drawBoardSquare(out, board.getPiece(pos), row, col - 'a' + 1);
-//            }
-//        }
         out.print(EscapeSequences.RESET_BG_COLOR);
         out.print(EscapeSequences.RESET_TEXT_COLOR);
 
@@ -425,26 +415,24 @@ public class GameplayRepl implements ServerMessageObserver {
             throw new IllegalArgumentException("Square is out of range: " + str);
         }
 
-        int alphabetIndex = alphabet - 'a';
+        int alphabetIndex = alphabet - 'a' + 1;
         int numIndex = number - '1';
 
+        numIndex = 8 - numIndex;
+
+        return new ChessPosition(numIndex, alphabetIndex);
+    }
+
+    private ChessPosition parseViewSquare(ChessPosition position) {
         int row;
         int col;
-        if(color == ChessGame.TeamColor.WHITE) {
-            col = 8 - alphabetIndex;
-            row = numIndex + 1;
-        }else {
-            col = alphabetIndex + 1;
-            row = 8 - numIndex;
+        if (this.color == ChessGame.TeamColor.BLACK) {
+            row = 9 - position.getRow();
+            col = 9 - position.getColumn();
+        } else {
+            row = position.getRow();
+            col = position.getColumn();
         }
-
-        if(row < 0  || row > 8 || col < 0 || col > 8 ) {
-            throw new IllegalArgumentException("Square is out of range: " + str);
-        }
-
-//        if(color == ChessGame.TeamColor.WHITE) {
-//            row = 9 - row;
-//        }
 
         return new ChessPosition(row, col);
     }
