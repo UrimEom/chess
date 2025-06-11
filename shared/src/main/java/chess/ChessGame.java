@@ -137,7 +137,10 @@ public class ChessGame {
         }
 
         Collection<ChessMove> validMoves = validMoves(startPosition);
-        if(!validMoves.contains(move)) { //check if making move is valid
+        boolean allowed = validMoves.stream().anyMatch(valid ->
+                valid.getStartPosition().equals(move.getStartPosition())
+                && valid.getEndPosition().equals(move.getEndPosition()));
+        if(!allowed) { //check if making move is valid
             throw new InvalidMoveException("Not valid move");
         }
 
