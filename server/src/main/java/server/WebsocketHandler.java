@@ -186,10 +186,6 @@ public class WebsocketHandler {
         }
 
         LoadMessage load = new LoadMessage(gameData);
-        Set<Session> existing = IN_GAME_SESSION.getOrDefault(gameID, Collections.emptySet());
-        for(Session s : existing) {
-            send(s, load);
-        }
 
         String user = auth.username();
 
@@ -198,8 +194,12 @@ public class WebsocketHandler {
         ChessPosition to = move.getEndPosition();
         String moveDescription = from.toString() + " -> " + to.toString();
         NotificationMessage notification = new NotificationMessage(String.format("%s moved: %s", user, moveDescription));
+        Set<Session> existing = IN_GAME_SESSION.getOrDefault(gameID, Collections.emptySet());
         for(Session s : existing) {
-            send(s, notification);
+            if(!s.equals(session) && s.isOpen()) {
+                send(s, notification);
+            }
+            send(s, load);
         }
 
         ChessGame.TeamColor enemy = game.getTeamTurn();
