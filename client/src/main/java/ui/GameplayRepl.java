@@ -220,6 +220,12 @@ public class GameplayRepl implements ServerMessageObserver {
 
     @Override
     public void notify(ServerMessage message) {
+        if(message instanceof NotificationMessage) {
+            NotificationMessage notification = (NotificationMessage) message;
+            out.println(notification.getMessage());
+            return;
+        }
+
         if(message instanceof LoadMessage) {
             LoadMessage loadMessage = (LoadMessage) message;
             GameData updated = loadMessage.getGame();
@@ -233,11 +239,11 @@ public class GameplayRepl implements ServerMessageObserver {
             return;
         }
 
-        if(message instanceof NotificationMessage) {
-            NotificationMessage notification = (NotificationMessage) message;
-            out.println(notification.getMessage());
-            return;
-        }
+//        if(message instanceof NotificationMessage) {
+//            NotificationMessage notification = (NotificationMessage) message;
+//            out.println(notification.getMessage());
+////            return;
+//        }
 
         highlighted.clear();
         out.println("Current turn: " + game.getTeamTurn());
@@ -301,7 +307,7 @@ public class GameplayRepl implements ServerMessageObserver {
         out.print(EscapeSequences.SET_BG_COLOR_LIGHT_GREY);
         out.print(EscapeSequences.RESET_TEXT_COLOR);
 
-        out.print(" " + (9- row) + " ");
+        out.print(" " + row + " ");
         out.print(EscapeSequences.RESET_TEXT_COLOR);
 
         if(!isBlack) {
@@ -328,7 +334,7 @@ public class GameplayRepl implements ServerMessageObserver {
         out.print(EscapeSequences.SET_BG_COLOR_LIGHT_GREY);
         out.print(EscapeSequences.RESET_TEXT_COLOR);
 
-        out.print(" " + (9- row) + " ");
+        out.print(" " + row + " ");
 
         out.print(EscapeSequences.RESET_TEXT_COLOR);
         out.print(EscapeSequences.RESET_BG_COLOR);
@@ -398,7 +404,7 @@ public class GameplayRepl implements ServerMessageObserver {
         int numIndex = number - '1' + 1;
 
 //        if(this.color == ChessGame.TeamColor.BLACK) {
-            numIndex = 9 - numIndex;
+//            numIndex = 9 - numIndex; //black
 //        }else {
 //            numIndex = 9 - numIndex;
 //            alphabetIndex = 9 - alphabetIndex;

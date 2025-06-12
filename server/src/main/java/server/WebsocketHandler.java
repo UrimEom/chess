@@ -122,7 +122,7 @@ public class WebsocketHandler {
         if(gameData == null) { return; }
 
         Set<Session> existing = IN_GAME_SESSION.computeIfAbsent(gameID, k -> new HashSet<>());
-        //        Set<Session> existing = IN_GAME_SESSION.getOrDefault(gameID, Collections.emptySet());
+//                Set<Session> existing = IN_GAME_SESSION.getOrDefault(gameID, Collections.emptySet());
         String username = auth.username();
         String player = username.equals(gameData.whiteUsername())
                 ? "white player" : username.equals(gameData.blackUsername())
@@ -202,7 +202,9 @@ public class WebsocketHandler {
             if(!s.equals(session) && s.isOpen()) {
                 send(s, notification);
             }
-            send(s, load);
+            if(s.isOpen()) {
+                send(s, load);
+            }
         }
 
         ChessGame.TeamColor enemy = game.getTeamTurn();
