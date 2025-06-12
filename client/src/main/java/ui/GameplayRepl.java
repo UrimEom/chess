@@ -84,12 +84,18 @@ public class GameplayRepl implements ServerMessageObserver {
                 }
                 case "resign" -> {
                     if(!isObserver) {
-                        server.resignGame(gameData.gameID());
+                        out.print("Are you sure you want to resign? (YES/NO): ");
+                        String answer = scanner.next().trim().toUpperCase();
+                        if(answer.equals("YES")) {
+                            server.resignGame(gameData.gameID());
+                        }else {
+                            out.println("Resignation was cancelled.");
+                        }
                         return;
                     }
                 }
                 case "highlight" -> {
-                    if(inputs.length == 2 && inputs[1].matches("[a-h][1-8]") && !isObserver) {
+                    if(inputs.length == 2 && inputs[1].matches("[a-h][1-8]")) {
                         handleHighlight(inputs);
                     }else {
                         out.println("USE: highlight <square> (ex: highlight b6)");
@@ -140,12 +146,9 @@ public class GameplayRepl implements ServerMessageObserver {
         boolean onLastRank    = (color == ChessGame.TeamColor.WHITE && to.getRow() == 8)
                 || (color == ChessGame.TeamColor.BLACK && to.getRow() == 1);
         boolean shouldPromote = isPawn && onLastRank;
-//        boolean isPromotion = elements.length == 4
-//                && piece.getPieceType() == ChessPiece.PieceType.PAWN;
         ChessMove move;
         if(elements.length == 4) {
             if (shouldPromote) {
-//                ChessPiece.PieceType promotionPiece = null;
                 String option = elements[3].toUpperCase();
                 switch (option) {
                     case "QUEEN" -> promotionPiece = ChessPiece.PieceType.QUEEN;
@@ -154,20 +157,11 @@ public class GameplayRepl implements ServerMessageObserver {
                     case "KNIGHT" -> promotionPiece = ChessPiece.PieceType.KNIGHT;
                     default -> out.println("Please choose proper promotion piece.");
                 }
-//                if (promotionPiece == null) {
-//                    out.println("Choose piece for the promotion.");
-//                    option = scanner.nextLine().trim().toUpperCase();
-//                }
-
-//            move = new ChessMove(from, to, promotionPiece);
             }else {
                 out.println("Invalid promotion. Please try again");
                 return;
             }
         }
-//        else {
-//            move = new ChessMove(from, to, promotionPiece);
-//        }
         move = new ChessMove(from, to, promotionPiece);
 
         try {
@@ -196,23 +190,12 @@ public class GameplayRepl implements ServerMessageObserver {
             drawBoard();
             return;
         }
-        if(piece.getTeamColor() != color) {
-            out.println("Not your piece.");
-            highlighted.clear();
-            drawBoard();
-            return;
-        }
 
         Collection<ChessMove> moves = game.validMoves(position);
         if(moves == null || moves.isEmpty()) {
             out.println("There is no legal moves for the piece at " + square);
             highlighted.clear();
             drawBoard();
-            return;
-        }
-
-        if(game.getTeamTurn() != color) {
-            System.out.println("This is not your turn.");
             return;
         }
 
