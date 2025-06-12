@@ -78,8 +78,6 @@ public class GameplayRepl implements ServerMessageObserver {
                 case "move" -> {
                     if(inputs.length >= 3 && !isObserver) {
                         handleMakeMove(inputs);
-                    }else if(isObserver) {
-                        out.println("You are observing game.");
                     }else {
                         out.println("USE: move <FROM> <TO> <PROMOTION_PIECE>");
                     }
@@ -88,15 +86,11 @@ public class GameplayRepl implements ServerMessageObserver {
                     if(!isObserver) {
                         server.resignGame(gameData.gameID());
                         return;
-                    }else if(isObserver) {
-                        out.println("You are observing game.");
                     }
                 }
                 case "highlight" -> {
                     if(inputs.length == 2 && inputs[1].matches("[a-h][1-8]") && !isObserver) {
                         handleHighlight(inputs);
-                    }else if(isObserver) {
-                        out.println("You are observing game.");
                     }else {
                         out.println("USE: highlight <square> (ex: highlight b6)");
                     }
