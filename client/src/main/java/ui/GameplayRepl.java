@@ -220,11 +220,11 @@ public class GameplayRepl implements ServerMessageObserver {
 
     @Override
     public void notify(ServerMessage message) {
-        if(message instanceof NotificationMessage) {
-            NotificationMessage notification = (NotificationMessage) message;
-            out.println(notification.getMessage());
-            return;
-        }
+//        if(message instanceof NotificationMessage) {
+//            NotificationMessage notification = (NotificationMessage) message;
+//            out.println(notification.getMessage());
+////            return;
+//        }
 
         if(message instanceof LoadMessage) {
             LoadMessage loadMessage = (LoadMessage) message;
@@ -239,11 +239,11 @@ public class GameplayRepl implements ServerMessageObserver {
             return;
         }
 
-//        if(message instanceof NotificationMessage) {
-//            NotificationMessage notification = (NotificationMessage) message;
-//            out.println(notification.getMessage());
-////            return;
-//        }
+        if(message instanceof NotificationMessage) {
+            NotificationMessage notification = (NotificationMessage) message;
+            out.println(notification.getMessage());
+            return;
+        }
 
         highlighted.clear();
         out.println("Current turn: " + game.getTeamTurn());

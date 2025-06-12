@@ -50,7 +50,7 @@ public class ChessPosition {
     @Override
     public String toString() {
         char file = (char)('a' + col - 1);
-        int rank = 9 - row;
+        int rank = row;
         return "" + file + rank;
     }
 }
