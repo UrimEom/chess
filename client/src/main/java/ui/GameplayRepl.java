@@ -135,13 +135,18 @@ public class GameplayRepl implements ServerMessageObserver {
             return;
         }
 
-        boolean isPromotion = elements.length == 4
-                && piece.getPieceType() == ChessPiece.PieceType.PAWN;
+        ChessPiece.PieceType promotionPiece = null;
+        boolean isPawn        = piece.getPieceType() == ChessPiece.PieceType.PAWN;
+        boolean onLastRank    = (color == ChessGame.TeamColor.WHITE && to.getRow() == 8)
+                || (color == ChessGame.TeamColor.BLACK && to.getRow() == 1);
+        boolean shouldPromote = isPawn && onLastRank;
+//        boolean isPromotion = elements.length == 4
+//                && piece.getPieceType() == ChessPiece.PieceType.PAWN;
         ChessMove move;
-        if(isPromotion) {
-            ChessPiece.PieceType promotionPiece = null;
-            String option = elements[3].toUpperCase();
-            while (promotionPiece == null) {
+        if(elements.length == 4) {
+            if (shouldPromote) {
+//                ChessPiece.PieceType promotionPiece = null;
+                String option = elements[3].toUpperCase();
                 switch (option) {
                     case "QUEEN" -> promotionPiece = ChessPiece.PieceType.QUEEN;
                     case "BISHOP" -> promotionPiece = ChessPiece.PieceType.BISHOP;
@@ -149,16 +154,21 @@ public class GameplayRepl implements ServerMessageObserver {
                     case "KNIGHT" -> promotionPiece = ChessPiece.PieceType.KNIGHT;
                     default -> out.println("Please choose proper promotion piece.");
                 }
-                if (promotionPiece == null) {
-                    out.println("Choose piece for the promotion.");
-                    option = scanner.nextLine().trim().toUpperCase();
-                }
-            }
-            move = new ChessMove(from, to, promotionPiece);
-        }else {
-            move = new ChessMove(from, to, null);
-        }
+//                if (promotionPiece == null) {
+//                    out.println("Choose piece for the promotion.");
+//                    option = scanner.nextLine().trim().toUpperCase();
+//                }
 
+//            move = new ChessMove(from, to, promotionPiece);
+            }else {
+                out.println("Invalid promotion. Please try again");
+                return;
+            }
+        }
+//        else {
+//            move = new ChessMove(from, to, promotionPiece);
+//        }
+        move = new ChessMove(from, to, promotionPiece);
 
         try {
             game.makeMove(move);
@@ -220,11 +230,11 @@ public class GameplayRepl implements ServerMessageObserver {
 
     @Override
     public void notify(ServerMessage message) {
-//        if(message instanceof NotificationMessage) {
-//            NotificationMessage notification = (NotificationMessage) message;
-//            out.println(notification.getMessage());
-////            return;
-//        }
+        if(message instanceof NotificationMessage) {
+            NotificationMessage notification = (NotificationMessage) message;
+            out.println(notification.getMessage());
+//            return;
+        }
 
         if(message instanceof LoadMessage) {
             LoadMessage loadMessage = (LoadMessage) message;
@@ -239,15 +249,15 @@ public class GameplayRepl implements ServerMessageObserver {
             return;
         }
 
-        if(message instanceof NotificationMessage) {
-            NotificationMessage notification = (NotificationMessage) message;
-            out.println(notification.getMessage());
-            return;
-        }
+//        if(message instanceof NotificationMessage) {
+//            NotificationMessage notification = (NotificationMessage) message;
+//            out.println(notification.getMessage());
+//            return;
+//        }
 
-        highlighted.clear();
-        out.println("Current turn: " + game.getTeamTurn());
-        drawBoard();
+//        highlighted.clear();
+//        out.println("Current turn: " + game.getTeamTurn());
+//        drawBoard();
     }
 
     public void drawBoard() {

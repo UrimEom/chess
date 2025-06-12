@@ -153,7 +153,10 @@ public class ChessGame {
             board.addPiece(capturePosition, null); //remove the captured pawn
         }
 
-        if(move.getPromotionPiece() != null) { //move with promotion
+        boolean isPawn = piece.getPieceType() == ChessPiece.PieceType.PAWN;
+        boolean lastReached = (piece.getTeamColor() == TeamColor.WHITE && endPosition.getRow() == 8)
+                || (piece.getTeamColor() == TeamColor.BLACK && endPosition.getRow() == 1);
+        if(isPawn && lastReached) { //move with promotion
             board.addPiece(endPosition, new ChessPiece(piece.getTeamColor(), move.getPromotionPiece()));
         }else { //move without promotion
             board.addPiece(endPosition, piece);

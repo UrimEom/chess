@@ -138,9 +138,7 @@ public class WebsocketHandler {
 //            IN_GAME_SESSION.put(gameID, new HashSet<>());
 //        }
 //        IN_GAME_SESSION.get(gameID).add(session);
-        if(!existing.contains(session)) {
-            existing.add(session);
-        }
+        existing.add(session);
 
         send(session, new LoadMessage(gameData));
     }
@@ -199,14 +197,20 @@ public class WebsocketHandler {
         String moveDescription = from.toString() + " -> " + to.toString();
         NotificationMessage notification = new NotificationMessage(String.format("%s moved: %s", user, moveDescription));
 //        Set<Session> existing = IN_GAME_SESSION.get(gameID);
-        Set<Session> existing = IN_GAME_SESSION.getOrDefault(gameID, Collections.emptySet());
+//        Set<Session> existing = IN_GAME_SESSION.getOrDefault(gameID, Collections.emptySet());
+        Set<Session> existing = IN_GAME_SESSION.computeIfAbsent(gameID, k -> new HashSet<>());
         for(Session s : existing) {
-            if(!s.equals(session) && s.isOpen()) {
+            if(!s.isOpen()) { continue; }
+            send(s, load);
+            if(!s.equals(session)) {
                 send(s, notification);
             }
-//            if(s.isOpen()) {
-                send(s, load);
+//            if(!s.equals(session) && s.isOpen()) {
+//                send(s, notification);
 //            }
+////            if(s.isOpen()) {
+//                send(s, load);
+////            }
         }
 
         ChessGame.TeamColor enemy = game.getTeamTurn();
