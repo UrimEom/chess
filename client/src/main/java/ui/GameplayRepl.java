@@ -84,13 +84,7 @@ public class GameplayRepl implements ServerMessageObserver {
                 }
                 case "resign" -> {
                     if(!isObserver) {
-                        out.print("Are you sure you want to resign? (YES/NO): ");
-                        String answer = scanner.next().trim().toUpperCase();
-                        if(answer.equals("YES")) {
-                            server.resignGame(gameData.gameID());
-                        }else {
-                            out.println("Resignation was cancelled.");
-                        }
+                        handleResign();
                         return;
                     }
                 }
@@ -119,6 +113,15 @@ public class GameplayRepl implements ServerMessageObserver {
         out.println("highlight <square> -> to highlight legal moves");
     }
 
+    private void handleResign() {
+        out.print("Are you sure you want to resign? (YES/NO): ");
+        String answer = scanner.next().trim().toUpperCase();
+        if(answer.equals("YES")) {
+            server.resignGame(gameData.gameID());
+        }else {
+            out.println("Resignation was cancelled.");
+        }
+    }
     private void handleMakeMove(String[] elements) {
         ChessPosition from;
         ChessPosition to;
@@ -231,16 +234,6 @@ public class GameplayRepl implements ServerMessageObserver {
             drawBoard();
             return;
         }
-
-//        if(message instanceof NotificationMessage) {
-//            NotificationMessage notification = (NotificationMessage) message;
-//            out.println(notification.getMessage());
-//            return;
-//        }
-
-//        highlighted.clear();
-//        out.println("Current turn: " + game.getTeamTurn());
-//        drawBoard();
     }
 
     public void drawBoard() {
@@ -306,15 +299,11 @@ public class GameplayRepl implements ServerMessageObserver {
         if(!isBlack) {
             for(char col = 'a'; col <= 'h'; col++) {
                 int viewCol = col - 'a' + 1;
-//                int viewCol = 'h' - col + 1;
                 ChessPosition pos = new ChessPosition(row, viewCol);
                 drawBoardSquare(out, board.getPiece(pos), row, viewCol);
             }
         }else {
             for(char col = 'h'; col >= 'a'; col--) {
-//                int viewRow = row;
-//                int modelCol = col - 'a' + 1;
-//                int viewCol = 'h' - col + 1;
                 int viewCol = col - 'a' + 1;
                 ChessPosition pos = new ChessPosition(row, viewCol);
                 drawBoardSquare(out, board.getPiece(pos), row, viewCol);
@@ -338,11 +327,6 @@ public class GameplayRepl implements ServerMessageObserver {
         ChessPosition position = new ChessPosition(row, col);
 
         boolean isDark = ((row + col) % 2 == 1);
-//        if(this.color == ChessGame.TeamColor.WHITE) {
-//            isDark = ((row + col) % 2 == 0);
-//        }else {
-//            isDark = ((row + col) % 2 == 0);
-//        }
 
         //highlight legal moves
         if (position.equals(selectedPos)) {
@@ -396,29 +380,7 @@ public class GameplayRepl implements ServerMessageObserver {
         int alphabetIndex = alphabet - 'a' + 1;
         int numIndex = number - '1' + 1;
 
-//        if(this.color == ChessGame.TeamColor.BLACK) {
-//            numIndex = 9 - numIndex; //black
-//        }else {
-//            numIndex = 9 - numIndex;
-//            alphabetIndex = 9 - alphabetIndex;
-//        }
-
-//        numIndex = 8 - numIndex;
-
         return new ChessPosition(numIndex, alphabetIndex);
     }
 
-//    private ChessPosition parseViewSquare(ChessPosition position) {
-//        int row;
-//        int col;
-//        if (this.color == ChessGame.TeamColor.BLACK) {
-//            row = 9 - position.getRow();
-//            col = 9 - position.getColumn();
-//        } else {
-//            row = position.getRow();
-//            col = position.getColumn();
-//        }
-//
-//        return new ChessPosition(row, col);
-//    }
 }

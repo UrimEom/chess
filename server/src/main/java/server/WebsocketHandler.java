@@ -122,7 +122,6 @@ public class WebsocketHandler {
         if(gameData == null) { return; }
 
         Set<Session> existing = IN_GAME_SESSION.computeIfAbsent(gameID, k -> new HashSet<>());
-//                Set<Session> existing = IN_GAME_SESSION.getOrDefault(gameID, Collections.emptySet());
         String username = auth.username();
         String player = username.equals(gameData.whiteUsername())
                 ? "white player" : username.equals(gameData.blackUsername())
@@ -133,11 +132,6 @@ public class WebsocketHandler {
                 send(other, notification);
             }
         }
-
-//        if(!IN_GAME_SESSION.containsKey(gameID)) {
-//            IN_GAME_SESSION.put(gameID, new HashSet<>());
-//        }
-//        IN_GAME_SESSION.get(gameID).add(session);
         existing.add(session);
 
         send(session, new LoadMessage(gameData));
@@ -196,8 +190,7 @@ public class WebsocketHandler {
         ChessPosition to = move.getEndPosition();
         String moveDescription = from.toString() + " -> " + to.toString();
         NotificationMessage notification = new NotificationMessage(String.format("%s moved: %s", user, moveDescription));
-//        Set<Session> existing = IN_GAME_SESSION.get(gameID);
-//        Set<Session> existing = IN_GAME_SESSION.getOrDefault(gameID, Collections.emptySet());
+
         Set<Session> existing = IN_GAME_SESSION.computeIfAbsent(gameID, k -> new HashSet<>());
         for(Session s : existing) {
             if(!s.isOpen()) { continue; }
@@ -205,12 +198,6 @@ public class WebsocketHandler {
             if(!s.equals(session)) {
                 send(s, notification);
             }
-//            if(!s.equals(session) && s.isOpen()) {
-//                send(s, notification);
-//            }
-////            if(s.isOpen()) {
-//                send(s, load);
-////            }
         }
 
         ChessGame.TeamColor enemy = game.getTeamTurn();
