@@ -121,22 +121,24 @@ public class WebsocketHandler {
         GameData gameData = validateGameData(session, authToken, gameID);
         if(gameData == null) { return; }
 
-        Set<Session> existing = IN_GAME_SESSION.getOrDefault(gameID, Collections.emptySet());
+        Set<Session> existing = IN_GAME_SESSION.computeIfAbsent(gameID, k -> new HashSet<>());
+        //        Set<Session> existing = IN_GAME_SESSION.getOrDefault(gameID, Collections.emptySet());
         String username = auth.username();
         String player = username.equals(gameData.whiteUsername())
                 ? "white player" : username.equals(gameData.blackUsername())
                 ? "black player" :"observer";
         NotificationMessage notification = new NotificationMessage(username + " connected as " + player);
         for(Session other : existing) {
-            if(other != session) {
+            if(other.isOpen() && !other.equals(session)) {
                 send(other, notification);
             }
         }
 
-        if(!IN_GAME_SESSION.containsKey(gameID)) {
-            IN_GAME_SESSION.put(gameID, new HashSet<>());
-        }
-        IN_GAME_SESSION.get(gameID).add(session);
+//        if(!IN_GAME_SESSION.containsKey(gameID)) {
+//            IN_GAME_SESSION.put(gameID, new HashSet<>());
+//        }
+//        IN_GAME_SESSION.get(gameID).add(session);
+        existing.add(session);
 
         send(session, new LoadMessage(gameData));
     }
@@ -194,7 +196,8 @@ public class WebsocketHandler {
         ChessPosition to = move.getEndPosition();
         String moveDescription = from.toString() + " -> " + to.toString();
         NotificationMessage notification = new NotificationMessage(String.format("%s moved: %s", user, moveDescription));
-        Set<Session> existing = IN_GAME_SESSION.getOrDefault(gameID, Collections.emptySet());
+        Set<Session> existing = IN_GAME_SESSION.get(gameID);
+//        Set<Session> existing = IN_GAME_SESSION.getOrDefault(gameID, Collections.emptySet());
         for(Session s : existing) {
             if(!s.equals(session) && s.isOpen()) {
                 send(s, notification);
