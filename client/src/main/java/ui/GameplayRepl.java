@@ -287,7 +287,7 @@ public class GameplayRepl implements ServerMessageObserver {
     }
 
     private void drawBoardLabel(PrintStream out) {
-        if (color == ChessGame.TeamColor.WHITE) {
+        if (color == ChessGame.TeamColor.BLACK) {
             for (char c = 'h'; c >= 'a'; c--) {
                 out.printf(" %c ", c);
             }
@@ -306,8 +306,8 @@ public class GameplayRepl implements ServerMessageObserver {
 
         if(!isBlack) {
             for(char col = 'a'; col <= 'h'; col++) {
-//                int viewCol = col - 'a' + 1;
-                int viewCol = 'h' - col + 1;
+                int viewCol = col - 'a' + 1;
+//                int viewCol = 'h' - col + 1;
                 ChessPosition pos = new ChessPosition(row, viewCol);
                 drawBoardSquare(out, board.getPiece(pos), row, viewCol);
             }
@@ -315,8 +315,8 @@ public class GameplayRepl implements ServerMessageObserver {
             for(char col = 'h'; col >= 'a'; col--) {
 //                int viewRow = row;
 //                int modelCol = col - 'a' + 1;
-                int viewCol = 'h' - col + 1;
-//                int viewCol = col - 'a' + 1;
+//                int viewCol = 'h' - col + 1;
+                int viewCol = col - 'a' + 1;
                 ChessPosition pos = new ChessPosition(row, viewCol);
                 drawBoardSquare(out, board.getPiece(pos), row, viewCol);
             }
@@ -338,7 +338,7 @@ public class GameplayRepl implements ServerMessageObserver {
     private void drawBoardSquare(PrintStream out, ChessPiece piece, int row, int col) {
         ChessPosition position = new ChessPosition(row, col);
 
-        boolean isDark = ((row + col) % 2 == 0);
+        boolean isDark = ((row + col) % 2 == 1);
 //        if(this.color == ChessGame.TeamColor.WHITE) {
 //            isDark = ((row + col) % 2 == 0);
 //        }else {
@@ -364,7 +364,7 @@ public class GameplayRepl implements ServerMessageObserver {
         if(piece == null) {
             out.print("   ");
         }else {
-            if(piece.getTeamColor() == ChessGame.TeamColor.WHITE) {
+            if(piece.getTeamColor() == ChessGame.TeamColor.BLACK) {
                 out.print(EscapeSequences.SET_TEXT_COLOR_BLUE);
             }else {
                 out.print(EscapeSequences.SET_TEXT_COLOR_RED);
