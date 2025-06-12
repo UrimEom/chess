@@ -206,10 +206,10 @@ public class GameplayRepl implements ServerMessageObserver {
             return;
         }
 
-        selectedPos = parseViewSquare(position);
+        selectedPos = position;
         highlighted.clear();
         for(ChessMove m : moves) {
-            highlighted.add(parseViewSquare(m.getEndPosition()));
+            highlighted.add(m.getEndPosition());
         }
 
         drawBoard();
@@ -220,12 +220,6 @@ public class GameplayRepl implements ServerMessageObserver {
 
     @Override
     public void notify(ServerMessage message) {
-        if(message instanceof NotificationMessage) {
-            NotificationMessage notification = (NotificationMessage) message;
-            out.println(notification.getMessage());
-            return;
-        }
-
         if(message instanceof LoadMessage) {
             LoadMessage loadMessage = (LoadMessage) message;
             GameData updated = loadMessage.getGame();
@@ -233,6 +227,16 @@ public class GameplayRepl implements ServerMessageObserver {
             if(model != null) {
                 this.game = model;
             }
+            highlighted.clear();
+            out.println("Current turn: " + game.getTeamTurn());
+            drawBoard();
+            return;
+        }
+
+        if(message instanceof NotificationMessage) {
+            NotificationMessage notification = (NotificationMessage) message;
+            out.println(notification.getMessage());
+            return;
         }
 
         highlighted.clear();
@@ -283,7 +287,7 @@ public class GameplayRepl implements ServerMessageObserver {
     }
 
     private void drawBoardLabel(PrintStream out) {
-        if (color == ChessGame.TeamColor.BLACK) {
+        if (color == ChessGame.TeamColor.WHITE) {
             for (char c = 'h'; c >= 'a'; c--) {
                 out.printf(" %c ", c);
             }
@@ -297,21 +301,23 @@ public class GameplayRepl implements ServerMessageObserver {
         out.print(EscapeSequences.SET_BG_COLOR_LIGHT_GREY);
         out.print(EscapeSequences.RESET_TEXT_COLOR);
 
-        out.print(" " + row + " ");
+        out.print(" " + (9- row) + " ");
         out.print(EscapeSequences.RESET_TEXT_COLOR);
 
         if(!isBlack) {
             for(char col = 'a'; col <= 'h'; col++) {
-                int viewCol = col - 'a' + 1;
-                ChessPosition pos = new ChessPosition(9 - row, viewCol);
-                drawBoardSquare(out, board.getPiece(pos), 9 - row, viewCol);
+//                int viewCol = col - 'a' + 1;
+                int viewCol = 'h' - col + 1;
+                ChessPosition pos = new ChessPosition(row, viewCol);
+                drawBoardSquare(out, board.getPiece(pos), row, viewCol);
             }
         }else {
             for(char col = 'h'; col >= 'a'; col--) {
-                int modelRow = 9 - row;
-                int modelCol = col - 'a' + 1;
+//                int viewRow = row;
+//                int modelCol = col - 'a' + 1;
                 int viewCol = 'h' - col + 1;
-                ChessPosition pos = new ChessPosition(modelRow, modelCol);
+//                int viewCol = col - 'a' + 1;
+                ChessPosition pos = new ChessPosition(row, viewCol);
                 drawBoardSquare(out, board.getPiece(pos), row, viewCol);
             }
         }
@@ -322,7 +328,7 @@ public class GameplayRepl implements ServerMessageObserver {
         out.print(EscapeSequences.SET_BG_COLOR_LIGHT_GREY);
         out.print(EscapeSequences.RESET_TEXT_COLOR);
 
-        out.print(" " + row + " ");
+        out.print(" " + (9- row) + " ");
 
         out.print(EscapeSequences.RESET_TEXT_COLOR);
         out.print(EscapeSequences.RESET_BG_COLOR);
@@ -333,18 +339,24 @@ public class GameplayRepl implements ServerMessageObserver {
         ChessPosition position = new ChessPosition(row, col);
 
         boolean isDark = ((row + col) % 2 == 0);
+//        if(this.color == ChessGame.TeamColor.WHITE) {
+//            isDark = ((row + col) % 2 == 0);
+//        }else {
+//            isDark = ((row + col) % 2 == 0);
+//        }
+
         //highlight legal moves
-        if(position.equals(selectedPos)) {
+        if (position.equals(selectedPos)) {
             out.print(EscapeSequences.SET_BG_COLOR_YELLOW);
-        }else if(highlighted.contains(position)) {
-            if(isDark) {
+        } else if (highlighted.contains(position)) {
+            if (isDark) {
                 out.print(EscapeSequences.SET_BG_COLOR_DARK_GREEN);
-            }else {
+            } else {
                 out.print(EscapeSequences.SET_BG_COLOR_GREEN);
             }
-        }else if((row + col) % 2 == 1) {
+        } else if (isDark) {
             out.print(EscapeSequences.SET_BG_COLOR_WHITE);
-        }else {
+        } else {
             out.print(EscapeSequences.SET_BG_COLOR_BLACK);
         }
 
@@ -372,35 +384,42 @@ public class GameplayRepl implements ServerMessageObserver {
     }
 
     private ChessPosition parseSquare(String str) {
-        if(str == null || str.length() != 2) {
+        if (str == null || str.length() != 2) {
             throw new IllegalArgumentException("Square must be 2 characters");
         }
         char alphabet = str.charAt(0);
         char number = str.charAt(1);
 
-        if(alphabet < 'a' || alphabet > 'h' || number < '1' || number > '8') {
+        if (alphabet < 'a' || alphabet > 'h' || number < '1' || number > '8') {
             throw new IllegalArgumentException("Square is out of range: " + str);
         }
 
         int alphabetIndex = alphabet - 'a' + 1;
-        int numIndex = number - '1';
+        int numIndex = number - '1' + 1;
 
-        numIndex = 8 - numIndex;
+//        if(this.color == ChessGame.TeamColor.BLACK) {
+            numIndex = 9 - numIndex;
+//        }else {
+//            numIndex = 9 - numIndex;
+//            alphabetIndex = 9 - alphabetIndex;
+//        }
+
+//        numIndex = 8 - numIndex;
 
         return new ChessPosition(numIndex, alphabetIndex);
     }
 
-    private ChessPosition parseViewSquare(ChessPosition position) {
-        int row;
-        int col;
-        if (this.color == ChessGame.TeamColor.BLACK) {
-            row = 9 - position.getRow();
-            col = 9 - position.getColumn();
-        } else {
-            row = position.getRow();
-            col = position.getColumn();
-        }
-
-        return new ChessPosition(row, col);
-    }
+//    private ChessPosition parseViewSquare(ChessPosition position) {
+//        int row;
+//        int col;
+//        if (this.color == ChessGame.TeamColor.BLACK) {
+//            row = 9 - position.getRow();
+//            col = 9 - position.getColumn();
+//        } else {
+//            row = position.getRow();
+//            col = position.getColumn();
+//        }
+//
+//        return new ChessPosition(row, col);
+//    }
 }
