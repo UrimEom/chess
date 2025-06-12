@@ -6,7 +6,6 @@ import websocket.messages.LoadMessage;
 import websocket.messages.NotificationMessage;
 import websocket.messages.ServerMessage;
 
-import javax.management.Notification;
 import java.io.PrintStream;
 import java.util.Collection;
 import java.util.HashSet;
@@ -57,7 +56,7 @@ public class GameplayRepl implements ServerMessageObserver {
     public void run() {
         System.out.println(" ");
         while(true) {
-            System.out.print("\n[GAME PLAY] >>> ");
+            System.out.print("\n[GAME PLAY] >>> \n");
             String input = scanner.nextLine().trim();
             String[] inputs = input.split(" ");
 
@@ -208,7 +207,6 @@ public class GameplayRepl implements ServerMessageObserver {
             return;
         }
 
-
         if(game.getTeamTurn() != color) {
             System.out.println("This is not your turn.");
             return;
@@ -229,46 +227,23 @@ public class GameplayRepl implements ServerMessageObserver {
     @Override
     public void notify(ServerMessage message) {
         if(message instanceof NotificationMessage) {
-            String text = ((NotificationMessage) message).getMessage();
-            out.println(text);
-
-            if(text.matches(".*[a-h][1-8]\\s+[a-h][1-8].*")) {
-                String[] parts = text.replaceAll("[^a-h1-8 ]", "").trim().split(" ");
-                System.out.println(parts); //debugging
-                if(parts.length == 2) {
-                    ChessPosition from = parseSquare(parts[0]);
-                    ChessPosition to = parseSquare(parts[1]);
-                    ChessMove move = new ChessMove(from, to, null);
-                    try {
-                        game.makeMove(move);
-                    } catch (InvalidMoveException e) {
-                        throw new RuntimeException("Error: Cannot make move");
-                    }
-                    highlighted.clear();
-                    drawBoard();
-                    out.println("Current turn: " + game.getTeamTurn());
-                }else {
-                    out.println("Invalid move format: " + text);
-                }
-            }
+            NotificationMessage notification = (NotificationMessage) message;
+            out.println(notification.getMessage());
             return;
         }
 
         if(message instanceof LoadMessage) {
-            GameData updated = ((LoadMessage) message).getGame();
+            LoadMessage loadMessage = (LoadMessage) message;
+            GameData updated = loadMessage.getGame();
             ChessGame model = updated.game();
             if(model != null) {
                 this.game = model;
             }
-
-            highlighted.clear();
-            out.println("\nCurrent board:");
-            drawBoard();
-            out.println("Current turn: " + game.getTeamTurn());
-            return;
         }
 
-        out.println("[Server] " + message);
+        highlighted.clear();
+        out.println("Current turn: " + game.getTeamTurn());
+        drawBoard();
     }
 
     public void drawBoard() {

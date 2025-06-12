@@ -128,7 +128,9 @@ public class WebsocketHandler {
                 ? "black player" :"observer";
         NotificationMessage notification = new NotificationMessage(username + " connected as " + player);
         for(Session other : existing) {
-            send(other, notification);
+            if(other != session) {
+                send(other, notification);
+            }
         }
 
         if(!IN_GAME_SESSION.containsKey(gameID)) {
@@ -197,9 +199,7 @@ public class WebsocketHandler {
         String moveDescription = from.toString() + " -> " + to.toString();
         NotificationMessage notification = new NotificationMessage(String.format("%s moved: %s", user, moveDescription));
         for(Session s : existing) {
-            if(!s.equals(session)) {
-                send(s, notification);
-            }
+            send(s, notification);
         }
 
         ChessGame.TeamColor enemy = game.getTeamTurn();

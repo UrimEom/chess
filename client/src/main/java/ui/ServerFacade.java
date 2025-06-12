@@ -62,7 +62,6 @@ public class ServerFacade implements ServerMessageObserver {
         http.joinGame(gameID, playerColor, authToken);
         setAuthToken(authToken);
         this.gameID = gameID;
-        connectWS();
     }
 
     //make move
